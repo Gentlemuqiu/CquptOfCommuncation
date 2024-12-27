@@ -1,0 +1,7 @@
+.carousel-img {
+    width: 100%; /* 图片宽度撑满父容器 */
+    height: 100%; /* 图片高度撑满父容器 */
+    object-fit: cover; /* 裁剪图片以适应父容器，居中显示 */
+    display: block; /* 清除图片默认的 inline-block 间隙 */
+  }
+  
