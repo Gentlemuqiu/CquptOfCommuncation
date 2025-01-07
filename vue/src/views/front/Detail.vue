@@ -115,15 +115,14 @@
   </div>
 </template>
 
-<script>
-import request from "@/utils/request";
+<script>import request from "@/utils/request";
 
 export default {
   name: "Detail",
   data() {
     return {
-      videoDialogVisible: false, 
-      complaintText: '' ,// 存储投诉输入框的值
+      videoDialogVisible: false,
+      complaintText: '',
       info: {},
       dialogVisible: false,
       messages: [],
@@ -145,6 +144,17 @@ export default {
     this.loadMessage(id);
   },
   methods: {
+    // 添加统一的登录检查方法
+    checkLogin() {
+      if (!this.user.id || !this.user.username) {
+        this.$message({
+          message: "请先登录",
+          type: "warning"
+        });
+        return false;
+      }
+      return true;
+    },
 
     showVideo() {
       if (this.info.url) {
@@ -158,45 +168,23 @@ export default {
     },
     
     handleCloseVideo(done) {
-      // Optional: Add any cleanup needed when closing the video dialog
       const videoElement = document.querySelector('video');
       if (videoElement) {
         videoElement.pause();
       }
       done();
     },
-    //上传小世界影音
-    movieSuccessUpload(res) {
-      this.entity.url = res.data;
-      if (this.entity.id) {  // 更新
-        request.put(url, this.entity).then(res => {
-          console.log(res)
-          if (res.code === '0') {
-            this.$message({
-              type: "success",
-              message: "更新成功"
-            })
-          } else {
-            this.$message({
-              type: "error",
-              message: "223423"
-            })
-          }
-        })
-      }
-      else {  // 新增
-        this.$message({
-          type: "error",
-          message: res.msg
-        })
-      }
-    },
-
-
 
     collectMovie() {
-      request.post("/collectMovie/", { name: this.info.name, img: this.info.img,
-        link: '/front/detail?id=' + this.info.id, userid: this.user.id, movieid: this.info.id }).then(res => {
+      if (!this.checkLogin()) return;
+      
+      request.post("/collectMovie/", { 
+        name: this.info.name, 
+        img: this.info.img,
+        link: '/front/detail?id=' + this.info.id, 
+        userid: this.user.id, 
+        movieid: this.info.id 
+      }).then(res => {
         if(res.code === '0') {
           this.$message({
             message: "收藏成功",
@@ -207,6 +195,7 @@ export default {
         }
       })
     },
+
     load() {
       let id = location.search.split("=")[1]
       request.get("/movie/" + id).then(res => {
@@ -215,7 +204,10 @@ export default {
         }
       })
     },
+
     zan() {
+      if (!this.checkLogin()) return;
+      
       if (this.zanFlag) {
         this.$message({
           message: "请勿重复点赞",
@@ -228,7 +220,10 @@ export default {
       this.zanFlag = true
       this.putInfo()
     },
+
     cai() {
+      if (!this.checkLogin()) return;
+      
       if (this.caiFlag) {
         this.$message({
           message: "请勿重复踩",
@@ -241,14 +236,10 @@ export default {
       this.caiFlag = true
       this.putInfo()
     },
+
     putInfo() {
-      if (!this.user.username) {
-        this.$message({
-          message: "请登录",
-          type: "warning"
-        });
-        return;
-      }
+      if (!this.checkLogin()) return;
+
       request.put("/movie", this.entity).then(res => {
         if (res.code === '0') {
           this.$message({
@@ -265,7 +256,10 @@ export default {
         this.loadMessage(this.info.id);
       })
     },
+
     look(username) {
+      if (!this.checkLogin()) return;
+      
       if (username === this.user.username) {
         this.$message({
           message: "自己不能关注自己",
@@ -282,25 +276,38 @@ export default {
         }
       })
     },
+
     collect(content) {
-      request.post("/collect/", {userId: this.user.id, name: this.info.name, content: content}).then(res => {
+      if (!this.checkLogin()) return;
+      
+      request.post("/collect/", {
+        userId: this.user.id, 
+        name: this.info.name, 
+        content: content
+      }).then(res => {
         if (res.code === '0') {
           this.$message({
             message: "收藏成功",
             type: "success"
           });
+          }else {
+          this.$message({
+            message: "您已收藏过了哟！",
+            type: "success"
+          });
         }
       })
     },
+
     jubao(info) {
-      if (!this.user.id) {
-        this.$message({
-          message: "请登录！",
-          type: "warning"
-        });
-        return;
-      }
-      request.post('/jubao', {commentId: info.id, commentUser: info.username, content: info.content, user: this.user.username}).then(res => {
+      if (!this.checkLogin()) return;
+      
+      request.post('/jubao', {
+        commentId: info.id,
+        commentUser: info.username,
+        content: info.content,
+        user: this.user.username
+      }).then(res => {
         if (res.code === '0') {
           this.$message({
             message: "投诉成功",
@@ -314,14 +321,13 @@ export default {
         }
       })
     },
+
     showLongComment(content) {
       this.longComment = content
-      console.log(content)
       this.vis = true
     },
+
     loadMessage(id) {
-      // 如果是留言的话，就写死=0
-      // 如果是 评论，则需要设置 当前被评论的模块的id作为foreignId
       request.get("/message/foreign/" + id + "/1").then(res => {
         this.messages = res.data;
       })
@@ -330,34 +336,29 @@ export default {
         this.longMessages = res.data;
       })
     },
+
     cancel() {
       this.dialogFormVisible = false;
       this.entity.reply = '';
     },
+
     reReply(id) {
-      if (!this.user.id) {
-        this.$message({
-          message: "请登录！",
-          type: "warning"
-        });
-        return;
-      }
+      if (!this.checkLogin()) return;
+      
       this.dialogFormVisible = true;
       this.entity.parentId = id;
     },
+
     reply() {
+      if (!this.checkLogin()) return;
+      
       this.entity.content = this.entity.reply;
       this.save();
     },
+
     save() {
-      if (!this.user.username) {
-        this.$message({
-          message: "请登录",
-          type: "warning"
-        });
-        return;
-      }
-      this.entity.username = this.user.username
+      if (!this.checkLogin()) return;
+
       if (!this.entity.content) {
         this.$message({
           message: "请填写内容",
@@ -365,9 +366,11 @@ export default {
         });
         return;
       }
+      
+      this.entity.username = this.user.username
       this.entity.type = 1
       this.entity.foreignId = this.info.id
-      // 如果是评论的话，在 save的时候要注意设置 当前模块的id为 foreignId。也就是  entity.foreignId = 模块id
+
       request.post("/message", this.entity).then(res => {
         if (res.code === '0') {
           this.$message({
@@ -385,7 +388,10 @@ export default {
         this.dialogFormVisible = false;
       })
     },
+
     del(id) {
+      if (!this.checkLogin()) return;
+      
       request.delete("/message/" + id).then(res => {
         this.$message({
           message: "删除成功",

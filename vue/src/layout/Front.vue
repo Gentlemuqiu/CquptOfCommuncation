@@ -49,8 +49,11 @@
 
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item @click="$router.push('/sayings')" v-if="user.role === 1 || user.role === 3">
+              <el-dropdown-item @click="$router.push('/sayings')" v-if="user.role === 1">
                 <i class="el-icon-setting"></i> 后台管理
+              </el-dropdown-item>
+              <el-dropdown-item @click="$router.push('/front/littleSaying')" v-if="user.role === 2">
+                <i class="el-icon-setting"></i> 新增帖子
               </el-dropdown-item>
               <el-dropdown-item @click="$router.push('/front/person')">
                 <i class="el-icon-user"></i> 个人信息
@@ -94,8 +97,7 @@
   </div>
 </template>
 
-<script>
-import request from "@/utils/request";
+<script>import request from "@/utils/request";
 
 export default {
   name: "Layout",
@@ -110,19 +112,42 @@ export default {
     }
   },
   created() {
-    let str = sessionStorage.getItem("user") || "{}";
-    this.user = JSON.parse(str);
-    request.get('/notice').then(res => {
-      this.notice = res.data.filter(v => v.status === '已发布');
-      this.count = this.notice.length;
-    });
+    this.initUserInfo();
+    this.initNotice();
+    // 添加事件监听器
+    window.addEventListener('storage', this.handleStorageChange);
+    // 添加自定义事件监听器
+    window.addEventListener('userUpdate', this.handleUserUpdate);
+  },
+  destroyed() {
+    // 清理事件监听器
+    window.removeEventListener('storage', this.handleStorageChange);
+    window.removeEventListener('userUpdate', this.handleUserUpdate);
   },
   methods: {
+    initUserInfo() {
+      let str = sessionStorage.getItem("user") || "{}";
+      this.user = JSON.parse(str);
+    },
+    initNotice() {
+      request.get('/notice').then(res => {
+        this.notice = res.data.filter(v => v.status === '已发布');
+        this.count = this.notice.length;
+      });
+    },
+    handleStorageChange(e) {
+      if (e.key === 'user') {
+        this.initUserInfo();
+      }
+    },
+    handleUserUpdate(e) {
+      // 处理自定义事件
+      this.initUserInfo();
+    },
     showNotice() {
       this.dialogVisible = true;
     },
     search() {
-      // 使用编程式导航，将搜索词作为查询参数传递给搜索页面
       this.$router.push({
         path: '/front/search',
         query: {
@@ -136,7 +161,15 @@ export default {
     handleClose(done) {
       done();
     }
-
+  },
+  // 添加watch来监听sessionStorage的变化
+  watch: {
+    '$route': {
+      handler() {
+        this.initUserInfo();
+      },
+      immediate: true
+    }
   }
 }
 </script>

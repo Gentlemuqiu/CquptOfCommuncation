@@ -59,7 +59,7 @@ public class FileController {
     }
 
     /**
-     * 富文本文件上传接口
+     * 父文本文件上传接口
      *
      * @param file 上传的文件
      * @return 编辑器需要的 JSON 格式结果

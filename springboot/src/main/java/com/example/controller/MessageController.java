@@ -45,20 +45,12 @@ public class MessageController {
     public Result<?> update(@RequestBody Message message) {
         return Result.success(messageMapper.updateById(message));
     }
-
-    /**
-     * 删除指定 ID 的消息及其所有子消息
-     */
     @Transactional
     @DeleteMapping("/{id}")
     public Result<?> delete(@PathVariable Long id) {
         deleteMessageAndChildren(id); // 调用递归删除方法
         return Result.success();
     }
-
-    /**
-     * 递归删除指定 ID 的消息及其所有子级
-     */
     private void deleteMessageAndChildren(Long id) {
         // 查找所有以当前 id 为 parent_id 的子消息
         List<Message> childMessages = messageMapper.selectList(

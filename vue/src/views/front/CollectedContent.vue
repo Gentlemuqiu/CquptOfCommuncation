@@ -14,16 +14,11 @@
           <el-image
             style="width: 100px; height: 100px"
             :src="scope.row.img"
-            :preview-src-list="[scope.row.img]"
+            :preview-src-list="[]"
           ></el-image>
         </template>
       </el-table-column>
-      <el-table-column prop="link" label="链接">
-        <template #default="scope">
-          <a :href="scope.row.link" target="_blank">{{ scope.row.link }}</a>
-        </template>
-      </el-table-column>
-
+      
       <el-table-column label="操作">
         <template #default="scope">
           <el-popconfirm
@@ -62,19 +57,18 @@ export default {
   name: "CollectMovie",
   data() {
     return {
-      loading: false, // 表格加载状态
-      pageNum: 1, // 当前页码
-      pageSize: 10, // 每页条数
-      total: 0, // 数据总量
-      tableData: [], // 表格数据
-      user: JSON.parse(sessionStorage.getItem("user") || "{}"), // 当前用户信息
+      loading: false,
+      pageNum: 1,
+      pageSize: 10,
+      total: 0,
+      tableData: [],
+      user: JSON.parse(sessionStorage.getItem("user") || "{}"),
     };
   },
   created() {
-    this.load(); // 初始化加载数据
+    this.load();
   },
   methods: {
-    // 加载表格数据
     load() {
       this.loading = true;
       request
@@ -82,7 +76,7 @@ export default {
           params: {
             pageNum: this.pageNum,
             pageSize: this.pageSize,
-            userId: this.user.id, // 传递当前用户的 ID
+            userId: this.user.id,
           },
         })
         .then((res) => {
@@ -100,14 +94,13 @@ export default {
         });
     },
 
-    // 删除数据
     handleDelete(id) {
       request
         .delete(`${url}/${id}`)
         .then((res) => {
           if (res.code === "0") {
             this.$message.success("删除成功");
-            this.load(); // 重新加载数据
+            this.load();
           } else {
             this.$message.error(res.msg || "删除失败");
           }
@@ -117,7 +110,6 @@ export default {
         });
     },
 
-    // 分页相关方法
     handleSizeChange(pageSize) {
       this.pageSize = pageSize;
       this.load();
