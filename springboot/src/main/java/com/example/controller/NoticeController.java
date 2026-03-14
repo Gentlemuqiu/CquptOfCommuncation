@@ -15,6 +15,36 @@ import javax.annotation.Resource;
 import java.util.*;
 import java.math.BigDecimal;
 
+/*
+INSERT INTO `user` (
+  `username`, 
+  `password`, 
+  `nick_name`, 
+  `age`, 
+  `sex`, 
+  `address`, 
+  `phone`, 
+  `role`, 
+  `tags`, 
+  `avatar`, 
+  `forbid_comment`, 
+  `forbid_login`
+) VALUES (
+  'admin',  -- 用户名（唯一，管理员默认账号）
+  '123456',
+  '系统管理员',  -- 昵称
+  30,  -- 年龄
+  '男',  -- 性别
+  '北京市海淀区中关村',  -- 地址
+  '13800138000',  -- 手机号（唯一）
+  1,  -- 角色：1=管理员（核心要求）
+  '管理员,系统,后台',  -- 标签
+  'https://example.com/avatar/admin.png',  -- 头像链接
+  0,  -- 允许评论（0=否）
+  0   -- 允许登录（0=否）
+);
+*/
+
 @RestController
 @RequestMapping("/notice")
 public class NoticeController {

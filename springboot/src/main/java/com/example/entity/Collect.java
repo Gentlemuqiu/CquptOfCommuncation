@@ -9,6 +9,17 @@ import com.baomidou.mybatisplus.annotation.TableId;
 
 import java.util.Date;
 
+/*
+CREATE TABLE `collect` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `name` VARCHAR(255) DEFAULT NULL COMMENT '电影名称',
+  `content` TEXT DEFAULT NULL COMMENT '评论内容',
+  `user_id` INT DEFAULT NULL COMMENT '用户id',
+  `time` DATETIME DEFAULT NULL COMMENT '收藏时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户收藏表';
+*/
+
 @Data
 @TableName("collect")
 public class Collect extends Model<Collect> {

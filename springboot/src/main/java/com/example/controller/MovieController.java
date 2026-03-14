@@ -88,5 +88,10 @@ public class MovieController {
         return Result.success(page);
     }
 
-
+    @GetMapping("/user/{user_id}")
+    public Result<?> findMovieByUserId(@PathVariable String user_id) {
+        List<Movie> list = movieMapper.selectList(
+                Wrappers.<Movie>lambdaQuery().eq(Movie::getPostUserId, user_id));
+        return Result.success(list);
+    }
 }
