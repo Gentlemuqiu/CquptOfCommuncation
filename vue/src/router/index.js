@@ -76,11 +76,6 @@ const routes = [
         component: () => import("@/views/front/Search"),
       },
       {
-        path: 'collect',
-        name: 'Collect',
-        component: () => import("@/views/front/Collect"),
-      },
-      {
         path: 'subscribePerson',
         name: 'SubscribePerson',
         component: () => import("@/views/front/SubscribePerson.vue"),

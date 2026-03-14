@@ -1,0 +1,9 @@
+@import './variables.css';
+@import './theme.css';
+@import './admin.css';
+
+html,
+body,
+#app {
+  min-height: 100%;
+}

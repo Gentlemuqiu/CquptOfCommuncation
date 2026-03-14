@@ -1,49 +1,59 @@
 <template>
-  <div style="padding: 10px">
-    <!-- 表格区域 -->
-    <el-table
-      v-loading="loading"
-      :data="tableData"
-      border
-      stripe
-      style="width: 100%"
-    >
-      <el-table-column prop="name" label="名称"></el-table-column>
-      <el-table-column label="图片">
-        <template #default="scope">
-          <el-image
-            style="width: 100px; height: 100px"
-            :src="scope.row.img"
-            :preview-src-list="[]"
-          ></el-image>
-        </template>
-      </el-table-column>
-      
-      <el-table-column label="操作">
-        <template #default="scope">
-          <el-popconfirm
-            title="确定删除吗？"
-            @confirm="handleDelete(scope.row.id)"
-          >
+  <div class="collected-page">
+    <div class="page-header">
+      <h2 class="page-title">
+        <i class="el-icon-collection title-icon"></i>
+        我收藏的内容
+      </h2>
+      <span class="item-count">共 {{ total }} 条</span>
+    </div>
+
+    <div v-if="tableData.length === 0 && !loading" class="empty-state">
+      <i class="el-icon-collection empty-icon"></i>
+      <p class="empty-text">暂无收藏内容</p>
+      <p class="empty-hint">去浏览信息，点击「收藏」即可保存到这里</p>
+    </div>
+
+    <div v-else class="content-grid">
+      <div
+        v-for="item in tableData"
+        :key="item.id"
+        class="content-card"
+        @click="$router.push(item.link)"
+      >
+        <div class="card-img-wrap">
+          <el-image :src="item.img" fit="cover" class="card-img" />
+        </div>
+        <div class="card-info">
+          <h3 class="card-name">{{ item.name }}</h3>
+          <el-popconfirm title="确定取消收藏吗？" @confirm.stop="handleDelete(item.id)">
             <template #reference>
-              <el-button size="mini" type="danger">删除</el-button>
+              <el-button
+                size="small"
+                type="danger"
+                plain
+                icon="el-icon-delete"
+                @click.stop
+              >
+                取消收藏
+              </el-button>
             </template>
           </el-popconfirm>
-        </template>
-      </el-table-column>
-    </el-table>
+        </div>
+      </div>
+    </div>
 
     <!-- 分页 -->
-    <div style="margin: 10px 0; background-color: white">
+    <div class="pagination-wrap" v-if="total > pageSize">
       <el-pagination
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
         :current-page="pageNum"
-        :page-sizes="[5, 10, 20]"
+        :page-sizes="[8, 12, 24]"
         :page-size="pageSize"
-        layout="total, sizes, prev, pager, next, jumper"
+        layout="prev, pager, next, sizes"
         :total="total"
-      ></el-pagination>
+      />
     </div>
   </div>
 </template>
@@ -51,79 +61,173 @@
 <script>
 import request from "@/utils/request";
 
-const url = "/collectMovie";
-
 export default {
-  name: "CollectMovie",
+  name: "CollectedContent",
   data() {
     return {
       loading: false,
       pageNum: 1,
-      pageSize: 10,
+      pageSize: 12,
       total: 0,
       tableData: [],
-      user: JSON.parse(sessionStorage.getItem("user") || "{}"),
+      user: JSON.parse(sessionStorage.getItem("user") || "{}")
     };
   },
-  created() {
-    this.load();
-  },
+  created() { this.load(); },
   methods: {
     load() {
       this.loading = true;
-      request
-        .get(`${url}/page`, {
-          params: {
-            pageNum: this.pageNum,
-            pageSize: this.pageSize,
-            userId: this.user.id,
-          },
-        })
-        .then((res) => {
-          this.loading = false;
-          if (res.code === "0") {
-            this.tableData = res.data.records || [];
-            this.total = res.data.total || 0;
-          } else {
-            this.$message.error(res.msg || "加载数据失败");
-          }
-        })
-        .catch(() => {
-          this.loading = false;
-          this.$message.error("加载数据失败，请稍后重试");
-        });
+      request.get("/collectMovie/page", {
+        params: { pageNum: this.pageNum, pageSize: this.pageSize, userId: this.user.id }
+      }).then(res => {
+        this.loading = false;
+        if (res.code === '0') {
+          this.tableData = res.data.records || [];
+          this.total = res.data.total || 0;
+        }
+      }).catch(() => { this.loading = false; });
     },
-
     handleDelete(id) {
-      request
-        .delete(`${url}/${id}`)
-        .then((res) => {
-          if (res.code === "0") {
-            this.$message.success("删除成功");
-            this.load();
-          } else {
-            this.$message.error(res.msg || "删除失败");
-          }
-        })
-        .catch(() => {
-          this.$message.error("删除失败，请稍后重试");
-        });
+      request.delete(`/collectMovie/${id}`).then(res => {
+        if (res.code === '0') { this.$message.success('已取消收藏'); this.load(); }
+        else this.$message.error(res.msg);
+      });
     },
-
-    handleSizeChange(pageSize) {
-      this.pageSize = pageSize;
-      this.load();
-    },
-    handleCurrentChange(pageNum) {
-      this.pageNum = pageNum;
-      this.load();
-    },
-  },
+    handleSizeChange(ps) { this.pageSize = ps; this.load(); },
+    handleCurrentChange(pn) { this.pageNum = pn; this.load(); },
+  }
 };
 </script>
 
 <style scoped>
-.el-table {
-  margin-top: 10px;
+.collected-page {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-lighter);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-base);
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-base);
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 2px solid var(--border-lighter);
+}
+
+.page-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.title-icon { color: var(--primary-color); }
+
+.item-count {
+  font-size: var(--font-size-sm);
+  color: var(--text-tertiary);
+  background: var(--bg-tertiary);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  margin-left: auto;
+}
+
+.empty-state {
+  text-align: center;
+  padding: var(--spacing-4xl);
+}
+
+.empty-icon {
+  font-size: 52px;
+  color: var(--text-disabled);
+  display: block;
+  margin-bottom: var(--spacing-md);
+}
+
+.empty-text {
+  font-size: var(--font-size-lg);
+  color: var(--text-tertiary);
+  margin: 0 0 var(--spacing-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.empty-hint {
+  font-size: var(--font-size-sm);
+  color: var(--text-disabled);
+  margin: 0;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.content-card {
+  border: 1px solid var(--border-lighter);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all var(--transition-cubic);
+  background: var(--bg-primary);
+}
+
+.content-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--border-primary);
+}
+
+.card-img-wrap {
+  height: 140px;
+  overflow: hidden;
+  background: var(--bg-tertiary);
+}
+
+.card-img {
+  width: 100%;
+  height: 100%;
+  transition: transform var(--transition-slow);
+}
+
+.content-card:hover .card-img {
+  transform: scale(1.08);
+}
+
+.card-info {
+  padding: var(--spacing-base) var(--spacing-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+}
+
+.card-name {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+  transition: color var(--transition-base);
+}
+
+.content-card:hover .card-name { color: var(--primary-color); }
+
+.pagination-wrap {
+  display: flex;
+  justify-content: center;
+  padding-top: var(--spacing-xl);
+  margin-top: var(--spacing-xl);
+  border-top: 1px solid var(--border-lighter);
 }
 </style>

@@ -1,11 +1,12 @@
 import axios from 'axios'
 import router from "@/router";
 
-const baseUrl = process.env.VUE_APP_BASEURL;
+// 获取基础URL，如果没有配置则使用默认值
+const baseUrl = process.env.VUE_APP_BASEURL || '/api';
 
 const request = axios.create({
     baseURL: baseUrl,
-    timeout: 5000
+    timeout: 10000  // 增加超时时间到10秒
 })
 
 // 请求白名单，如果请求在白名单里面，将不会被拦截校验权限

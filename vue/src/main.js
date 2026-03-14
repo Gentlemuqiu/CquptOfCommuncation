@@ -7,8 +7,7 @@ import 'element-plus/theme-chalk/index.css';
 import 'dayjs/locale/zh-cn'
 import locale from 'element-plus/lib/locale/lang/zh-cn'
 
-import '@/assets/css/global.css'
-import '@/assets/css/home.css'
+import '@/styles/index.css'
 
 
 import VMdEditor from '@kangc/v-md-editor';

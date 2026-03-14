@@ -295,70 +295,65 @@ export default {
 
 <style scoped>
 .page-container {
-  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 40px 20px;
-  background-color: #f5f7fa;
+  padding: var(--spacing-xl) var(--spacing-md);
 }
 
 .person-container {
   width: 100%;
-  max-width: 600px;
-}
-
-.info-card {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);
+  max-width: 580px;
 }
 
 .card-header {
-  margin-bottom: 30px;
   text-align: center;
+  padding: var(--spacing-sm) 0 var(--spacing-md);
 }
 
 .profile-title {
-  color: #303133;
-  font-size: 24px;
-  font-weight: 500;
+  color: var(--text-primary);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
   margin: 0;
 }
 
 .profile-form {
-  margin-top: 20px;
+  margin-top: var(--spacing-lg);
 }
 
 .avatar-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 40px;
+  margin-bottom: var(--spacing-2xl);
 }
 
 .avatar-container {
-  width: 120px;
-  height: 120px;
+  width: 110px;
+  height: 110px;
   overflow: hidden;
   border-radius: 50%;
   margin: 0 auto;
   cursor: pointer;
-  border: 2px dashed #d9d9d9;
-  transition: all 0.3s;
+  border: 2.5px dashed var(--border-base);
+  transition: all var(--transition-base);
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  background: var(--bg-secondary);
 }
 
 .no-avatar {
-  background: #f5f7fa;
+  background: var(--bg-tertiary);
 }
 
 .avatar-container:hover {
-  border-color: #409EFF;
+  border-color: var(--primary-color);
+  border-style: solid;
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.1);
 }
 
 .avatar {
@@ -369,72 +364,68 @@ export default {
 }
 
 .avatar-uploader-icon {
-  font-size: 28px;
-  color: #8c939d;
+  font-size: 26px;
+  color: var(--text-disabled);
 }
 
 .avatar-tip {
-  font-size: 12px;
-  color: #666;
-  margin-top: 8px;
+  font-size: var(--font-size-xs);
+  color: var(--text-disabled);
+  margin-top: 6px;
   text-align: center;
 }
 
 .no-avatar .avatar-tip {
   position: absolute;
-  bottom: 10px;
+  bottom: 8px;
 }
+
 .form-section {
-  max-width: 500px;
+  max-width: 460px;
   margin: 0 auto;
 }
 
 .form-section :deep(.el-form-item) {
-  margin-bottom: 22px;
+  margin-bottom: var(--spacing-lg);
 }
 
-.button-container {
-  text-align: center;
-  margin-top: 40px;
-}
-
-.submit-button {
-  width: 180px;
-  height: 40px;
-  font-size: 16px;
-}
-
-/* Element UI 组件样式优化 */
-:deep(.el-form-item__label) {
-  font-weight: 500;
-  color: #606266;
-}
-
-:deep(.el-input__inner) {
-  height: 40px;
-  line-height: 40px;
+.form-section :deep(.el-form-item__label) {
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  font-size: var(--font-size-base);
 }
 
 :deep(.el-radio) {
-  margin-right: 30px;
+  margin-right: var(--spacing-md);
 }
 
 :deep(.el-select) {
   width: 100%;
 }
 
-/* 响应式布局 */
+.button-container {
+  text-align: center;
+  margin-top: var(--spacing-2xl);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--border-lighter);
+}
+
+.submit-button {
+  min-width: 160px;
+  height: 44px;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.5px;
+}
+
+/* ── 响应式 ── */
 @media screen and (max-width: 768px) {
   .page-container {
-    padding: 20px 10px;
+    padding: var(--spacing-md) var(--spacing-sm);
   }
 
   .person-container {
     max-width: 100%;
-  }
-
-  .profile-form {
-    padding: 0;
   }
 }
 </style>

@@ -1,95 +1,43 @@
 <template>
-  <div style="background-color: #eee; min-height: 100vh">
-    <div style="height: 50px; line-height: 50px; border-bottom: 1px solid #ccc; display: flex; background-color: #fff">
-      <div style="height: 50px; line-height: 50px; border-bottom: 1px solid #ccc; display: flex; background-color: #fff">
-        <img src="../assets/image/cqupt.svg" alt="Logo" style="width: 40px; height: 40px; margin-top: 5px;">
-        <div style="color:#1D6849; font-weight: bold; font-size: 25px; cursor: pointer" @click="$router.push('/front/home')">CQUPT交流论坛</div>
-      </div>
+  <div class="layout-container">
+    <!-- 深色主导航栏 -->
+    <Navbar :user="user" />
 
-      <div style="width: 300px">
-        <ul class="menu-box">
-          <li :class="{'active': $route.path === '/front/home'}" @click="$router.push('/front/home')">首页</li>
-        </ul>
-      </div>
-
-      <div style="flex: 1">
-        <el-input 
-          style="width: 300px; margin-left: 100px" 
-          v-model="name" 
-          clearable 
-          placeholder="请输入搜索内容"
-          @keyup.enter="search" 
+    <!-- 搜索 & 用户操作栏 -->
+    <div class="top-bar">
+      <div class="top-bar-content">
+        <SearchBar />
+        <UserMenu
+          :user="user"
+          :notice-count="count"
+          @show-notice="showNotice"
         />
-        <el-button style="margin-left: 5px" type="primary" @click="search">搜索</el-button>
-      </div>
-
-      <div style="width: 130px; display: flex; align-items: center; justify-content: flex-end;">
-        <span @click="showNotice" style="margin-right: 10px; color: orangered; cursor: pointer; display: flex; align-items: center;">
-          <i class="el-icon-bell" style="font-size:18px; margin-right: 5px;"></i> {{ count }}
-        </span>
-        <el-button 
-          v-if="!user.id" 
-          @click="$router.push('/login')"
-          type="primary"
-          size="small"
-        >登录</el-button>
-
-        <!-- 已登录状态 -->
-        <el-dropdown v-else trigger="click">
-          <div class="user-info">
-            <el-avatar 
-              :size="32"
-              :src="user.avatar || defaultAvatar"
-              @error="handleAvatarError"
-            >
-              {{ user.nickName ? user.nickName[0].toUpperCase() : 'U' }}
-            </el-avatar>
-            <i class="el-icon-arrow-down el-icon--right"></i>
-          </div>
-
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item @click="$router.push('/sayings')" v-if="user.role === 1">
-                <i class="el-icon-setting"></i> 后台管理
-              </el-dropdown-item>
-              <el-dropdown-item @click="$router.push('/front/littleSaying')" v-if="user.role === 2">
-                <i class="el-icon-setting"></i> 新增帖子
-              </el-dropdown-item>
-              <el-dropdown-item @click="$router.push('/front/person')">
-                <i class="el-icon-user"></i> 个人信息
-              </el-dropdown-item>
-              <el-dropdown-item @click="$router.push('/front/collect')">
-                <i class="el-icon-star-off"></i> 我收藏的评论
-              </el-dropdown-item>
-              <el-dropdown-item @click="$router.push('/front/collectedContent')">
-                <i class="el-icon-collection"></i> 我收藏的内容
-              </el-dropdown-item>
-              <el-dropdown-item @click="$router.push('/front/subscribePerson')">
-                <i class="el-icon-coordinate"></i> 我关注的人
-              </el-dropdown-item>
-              <el-dropdown-item divided @click="$router.push('/login')">
-                <i class="el-icon-switch-button"></i> 退出论坛
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
       </div>
     </div>
 
-    <el-row>
-      <el-col :span="18" :offset="3">
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <div class="content-wrapper">
         <router-view />
-      </el-col>
-    </el-row>
+      </div>
+    </main>
 
     <!-- 公告弹框 -->
-    <el-dialog title="公告" v-model="dialogVisible" width="40%">
-      <div style="padding: 0 20px">
-        <el-collapse v-model="active">
-          <el-collapse-item :title="item.name" :name="index+''" v-for="(item, index) in notice" :key="item.id">
-            <div style="font-size: 12px; color: #888">
-              {{ item.content }}
-            </div>
+    <el-dialog
+      title="系统公告"
+      v-model="dialogVisible"
+      width="520px"
+      class="notice-dialog"
+    >
+      <div class="notice-content">
+        <el-collapse v-model="active" accordion>
+          <el-collapse-item
+            :title="item.name"
+            :name="index + ''"
+            v-for="(item, index) in notice"
+            :key="item.id"
+          >
+            <div class="notice-item-content">{{ item.content }}</div>
           </el-collapse-item>
         </el-collapse>
       </div>
@@ -97,136 +45,151 @@
   </div>
 </template>
 
-<script>import request from "@/utils/request";
+<script>
+import request from "@/utils/request";
+import Navbar from "@/components/layout/Navbar.vue";
+import SearchBar from "@/components/layout/SearchBar.vue";
+import UserMenu from "@/components/layout/UserMenu.vue";
 
 export default {
-  name: "Layout",
+  name: "FrontLayout",
+  components: { Navbar, SearchBar, UserMenu },
   data() {
     return {
       user: {},
-      name: '',
-      count: 1,
+      count: 0,
       notice: [],
       dialogVisible: false,
       active: '0'
-    }
+    };
   },
   created() {
     this.initUserInfo();
     this.initNotice();
-    // 添加事件监听器
     window.addEventListener('storage', this.handleStorageChange);
-    // 添加自定义事件监听器
     window.addEventListener('userUpdate', this.handleUserUpdate);
   },
-  destroyed() {
-    // 清理事件监听器
+  beforeUnmount() {
     window.removeEventListener('storage', this.handleStorageChange);
     window.removeEventListener('userUpdate', this.handleUserUpdate);
   },
+  watch: {
+    '$route': {
+      handler() { this.initUserInfo(); },
+      immediate: true
+    }
+  },
   methods: {
     initUserInfo() {
-      let str = sessionStorage.getItem("user") || "{}";
-      this.user = JSON.parse(str);
+      const userStr = sessionStorage.getItem("user") || "{}";
+      this.user = JSON.parse(userStr);
     },
     initNotice() {
       request.get('/notice').then(res => {
         this.notice = res.data.filter(v => v.status === '已发布');
         this.count = this.notice.length;
-      });
+      }).catch(() => { this.count = 0; });
     },
     handleStorageChange(e) {
-      if (e.key === 'user') {
-        this.initUserInfo();
-      }
+      if (e.key === 'user') this.initUserInfo();
     },
-    handleUserUpdate(e) {
-      // 处理自定义事件
-      this.initUserInfo();
-    },
-    showNotice() {
-      this.dialogVisible = true;
-    },
-    search() {
-      this.$router.push({
-        path: '/front/search',
-        query: {
-          name: this.name.trim()
-        }
-      });
-    },
-    handleAvatarError(e) {
-      e.target.src = this.defaultAvatar;
-    },
-    handleClose(done) {
-      done();
-    }
-  },
-  // 添加watch来监听sessionStorage的变化
-  watch: {
-    '$route': {
-      handler() {
-        this.initUserInfo();
-      },
-      immediate: true
-    }
+    handleUserUpdate() { this.initUserInfo(); },
+    showNotice() { this.dialogVisible = true; }
   }
-}
+};
 </script>
 
 <style scoped>
-.menu-box {
-  list-style: none;
-  display: flex;
-  margin-left: 70px;
-}
-.menu-box li {
-  padding: 0 20px;
-  text-align: center;
-  cursor: pointer;
-  color: #666;
-}
-.menu-box li:hover {
-  color: dodgerblue;
-}
-.active {
-  background-color: dodgerblue;
-  color: white !important;
+/* ── 整体容器 ── */
+.layout-container {
+  min-height: 100vh;
+  background: var(--bg-page);
+  background-attachment: fixed;
 }
 
-.user-info {
+/* ── 次级操作栏（搜索 + 用户菜单） ── */
+.top-bar {
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid var(--border-lighter);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  position: sticky;
+  top: 68px;
+  z-index: calc(var(--z-sticky) - 1);
+}
+
+.top-bar-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 10px var(--spacing-xl);
   display: flex;
   align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  padding: 0 5px;
-  border-radius: 15px;
-  transition: all 0.3s;
+  justify-content: space-between;
+  gap: var(--spacing-lg);
 }
 
-.user-info:hover {
-  background-color: #f5f7fa;
+/* ── 主内容区 ── */
+/* 注意：不对 router-view 子元素做通用包裹，避免重复边框 */
+.main-content {
+  padding: var(--spacing-xl) 0 var(--spacing-3xl);
+  min-height: calc(100vh - 122px);
 }
 
-.el-dropdown-menu__item i {
-  margin-right: 8px;
+.content-wrapper {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-lg);
 }
 
-:deep(.el-badge__content) {
-  background-color: #F56C6C;
+/* ── 公告弹框 ── */
+.notice-dialog :deep(.el-dialog__header) {
+  background: var(--primary-gradient);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  margin-right: 0;
+  border-bottom: none;
 }
 
-:deep(.el-avatar) {
-  background-color: #409EFF;
+.notice-dialog :deep(.el-dialog__title) {
+  color: #fff;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-lg);
+}
+
+.notice-dialog :deep(.el-dialog__headerbtn .el-dialog__close) {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.notice-dialog :deep(.el-dialog__headerbtn:hover .el-dialog__close) {
   color: #fff;
 }
 
-.notice-icon {
-  display: flex;
-  align-items: center;
-  margin-right: 10px;
-  font-size: 18px;
-  color: #F56C6C;
-  cursor: pointer;
+.notice-content { padding: var(--spacing-sm) 0; }
+
+.notice-item-content {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  line-height: var(--line-height-relaxed);
+  padding: var(--spacing-sm) 0;
+}
+
+/* ── 响应式 ── */
+@media (max-width: 768px) {
+  .top-bar { top: 68px; }
+
+  .top-bar-content {
+    flex-direction: column;
+    padding: var(--spacing-base);
+    gap: var(--spacing-base);
+  }
+
+  .main-content {
+    padding: var(--spacing-md) 0 var(--spacing-xl);
+  }
+
+  .content-wrapper {
+    padding: 0 var(--spacing-sm);
+  }
 }
 </style>
