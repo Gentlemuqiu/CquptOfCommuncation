@@ -89,18 +89,6 @@ export default {
   -webkit-backdrop-filter: blur(20px);
 }
 
-/* 顶部彩色线条装饰 */
-.navbar::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: var(--primary-gradient);
-  z-index: 1;
-}
-
 .navbar-content {
   max-width: 1400px;
   margin: 0 auto;

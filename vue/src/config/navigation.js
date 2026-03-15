@@ -18,11 +18,8 @@ export function getFrontMenuItems(user = {}) {
     { path: '/front/home', label: '首页', icon: House }
   ];
 
-  if (user.id && user.role === 2) {
-    items.push({ path: '/front/littleSaying', label: '发布信息', icon: Edit });
-  }
-
   if (user.id) {
+    items.push({ path: '/front/littleSaying', label: '发布信息', icon: Edit });
     items.push({ path: '/front/collectedContent', label: '我的收藏', icon: Star });
   }
 
@@ -49,5 +46,4 @@ export const ADMIN_SIDEBAR_ITEMS = [
   { path: '/sayings', label: '信息管理', icon: 'Document' },
   { path: '/jubao',   label: '投诉管理', icon: 'Warning' },
   { path: '/comment', label: '评论管理', icon: 'ChatDotRound' },
-  { path: '/notice',  label: '公告管理', icon: 'Bell' },
 ];

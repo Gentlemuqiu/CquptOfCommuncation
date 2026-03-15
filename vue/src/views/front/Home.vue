@@ -3,11 +3,6 @@
 
     <!-- ════════════════ 英雄横幅 ════════════════ -->
     <div class="hero-banner">
-      <!-- 装饰光斑 -->
-      <div class="deco deco-1"></div>
-      <div class="deco deco-2"></div>
-      <div class="deco deco-3"></div>
-
       <div class="hero-inner">
         <div class="hero-tag">
           <el-icon><School /></el-icon>
@@ -16,23 +11,25 @@
         <h1 class="hero-title">就业信息中心</h1>
         <p class="hero-desc">汇聚校园招聘 · 实习机会 · 求职指南，助力你迈出职业第一步</p>
 
-        <!-- 统计数字 -->
-        <div class="hero-stats">
-          <div class="stat-item">
-            <el-icon class="stat-icon"><Document /></el-icon>
-            <span class="stat-num">{{ total }}</span>
-            <span class="stat-label">条信息</span>
+        <!-- 统计与分类 -->
+        <div class="hero-stats-wrap">
+          <div class="hero-stats">
+            <div class="stat-item">
+              <el-icon class="stat-icon"><Document /></el-icon>
+              <span class="stat-num">{{ totalAll }}</span>
+              <span class="stat-label">条信息</span>
+            </div>
+            <div class="stat-item">
+              <el-icon class="stat-icon"><Grid /></el-icon>
+              <span class="stat-num">{{ areas.length }}</span>
+              <span class="stat-label">大分类</span>
+            </div>
           </div>
-          <div class="stat-divider"></div>
-          <div class="stat-item">
-            <el-icon class="stat-icon"><Grid /></el-icon>
-            <span class="stat-num">{{ areas.length }}</span>
-            <span class="stat-label">大分类</span>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat-item">
-            <el-icon class="stat-icon"><Collection /></el-icon>
-            <span class="stat-num">{{ areas.map(a=>a.label).join(' / ') }}</span>
+          <div class="hero-tags">
+            <span v-for="item in areas" :key="item.key" class="hero-tag-item">
+              <span class="hero-tag-emoji">{{ item.icon }}</span>
+              {{ item.label }}
+            </span>
           </div>
         </div>
       </div>
@@ -202,17 +199,17 @@
 </template>
 
 <script>
-import request from "@/utils/request";
-import { INFO_AREAS } from "@/config/navigation";
+import { getMoviePage, getMoviePageByArea } from '@/api/movie'
+import { INFO_AREAS } from '@/config/navigation'
 import {
-  School, Document, Grid, Collection,
+  School, Document, Grid,
   Link, Check, Picture, View, Calendar, Sunny
 } from '@element-plus/icons-vue'
 
 export default {
   name: "Home",
   components: {
-    School, Document, Grid, Collection,
+    School, Document, Grid,
     Link, Check, Picture, View, Calendar, Sunny
   },
   data() {
@@ -227,6 +224,7 @@ export default {
       pageNum: 1,
       pageSize: 12,
       total: 0,
+      totalAll: 0,  // 全站信息总数，用于英雄区展示
       activeArea: INFO_AREAS[0].key,
       listLoading: false
     };
@@ -246,21 +244,25 @@ export default {
     }
   },
   created() {
+    this.loadTotalAll();
     this.loadArea(1, this.activeArea);
   },
   methods: {
+    loadTotalAll() {
+      getMoviePage({ pageNum: 1, pageSize: 1 }).then(res => {
+        this.totalAll = res.data.total != null ? res.data.total : 0
+      })
+    },
     loadArea(pageNum, area) {
-      this.activeArea = area;
-      this.pageNum = pageNum;
-      this.listLoading = true;
-      request.get("/movie/page/area", {
-        params: { pageNum, pageSize: this.pageSize, area }
-      }).then(res => {
-        this.tableDataArea = res.data.records || [];
-        this.total = res.data.total || 0;
-      }).finally(() => {
-        this.listLoading = false;
-      });
+      this.activeArea = area
+      this.pageNum = pageNum
+      this.listLoading = true
+      getMoviePageByArea({ pageNum, pageSize: this.pageSize, area })
+        .then(res => {
+          this.tableDataArea = res.data.records || []
+          this.total = res.data.total || 0
+        })
+        .finally(() => { this.listLoading = false })
     },
     handleSizeChange(pageSize) {
       this.pageSize = pageSize;
@@ -282,37 +284,17 @@ export default {
 }
 
 /* ════════════════════════════════════════
-   英雄横幅
+   英雄横幅 - 清爽现代风格
 ════════════════════════════════════════ */
 .hero-banner {
-  background: var(--nav-bg);
+  background: linear-gradient(160deg, #f0fdfa 0%, #ecfeff 35%, #f8fafc 100%);
   border-radius: var(--radius-xl);
   margin-bottom: var(--spacing-lg);
   position: relative;
   overflow: hidden;
-  padding: var(--spacing-2xl) var(--spacing-2xl) 0;
-}
-
-/* 装饰光斑 */
-.deco {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-}
-.deco-1 {
-  top: -120px; right: -80px;
-  width: 420px; height: 420px;
-  background: radial-gradient(circle, rgba(15,118,110,0.22) 0%, transparent 70%);
-}
-.deco-2 {
-  bottom: -80px; left: -60px;
-  width: 300px; height: 300px;
-  background: radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%);
-}
-.deco-3 {
-  top: 40px; left: 40%;
-  width: 180px; height: 180px;
-  background: radial-gradient(circle, rgba(20,184,166,0.08) 0%, transparent 70%);
+  padding: var(--spacing-2xl);
+  border: 1px solid var(--border-lighter);
+  box-shadow: 0 1px 3px rgba(15, 118, 110, 0.06);
 }
 
 .hero-inner {
@@ -320,7 +302,6 @@ export default {
   z-index: 1;
   max-width: 720px;
   margin: 0 auto;
-  padding-bottom: var(--spacing-2xl);
   text-align: center;
 }
 
@@ -328,12 +309,13 @@ export default {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 14px;
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.15);
+  padding: 6px 16px;
+  background: rgba(15, 118, 110, 0.1);
+  border: 1px solid rgba(15, 118, 110, 0.2);
   border-radius: var(--radius-full);
-  color: rgba(255,255,255,0.7);
+  color: var(--primary-dark);
   font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   letter-spacing: 0.5px;
   margin-bottom: var(--spacing-md);
 }
@@ -342,61 +324,108 @@ export default {
   font-size: var(--font-size-4xl);
   font-weight: var(--font-weight-extrabold);
   margin: 0 0 var(--spacing-base);
-  line-height: 1.1;
-  background: linear-gradient(135deg, #ffffff 0%, rgba(20,184,166,0.9) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: -1px;
+  line-height: 1.15;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+}
+
+.hero-title::after {
+  content: '';
+  display: block;
+  width: 48px;
+  height: 4px;
+  margin: var(--spacing-sm) auto 0;
+  background: var(--primary-gradient);
+  border-radius: var(--radius-full);
 }
 
 .hero-desc {
   font-size: var(--font-size-md);
-  color: rgba(255,255,255,0.58);
+  color: var(--text-secondary);
   margin: 0 0 var(--spacing-xl);
   line-height: var(--line-height-relaxed);
 }
 
-/* 统计行 */
+/* 统计与分类 */
+.hero-stats-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
 .hero-stats {
   display: inline-flex;
   align-items: center;
-  gap: var(--spacing-lg);
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: var(--radius-full);
-  padding: var(--spacing-sm) var(--spacing-xl);
-  backdrop-filter: blur(6px);
+  gap: var(--spacing-base);
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .stat-item {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-full);
+  padding: 10px 20px;
+  box-shadow: var(--shadow-xs);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.stat-item:hover {
+  border-color: rgba(15, 118, 110, 0.35);
+  box-shadow: 0 2px 12px rgba(15, 118, 110, 0.12);
 }
 
 .stat-icon {
   color: var(--primary-lighter);
-  font-size: 15px;
+  font-size: 16px;
   flex-shrink: 0;
 }
 
 .stat-num {
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-bold);
-  color: #fff;
+  color: var(--primary-dark);
 }
 
 .stat-label {
-  font-size: var(--font-size-xs);
-  color: rgba(255,255,255,0.5);
+  font-size: var(--font-size-sm);
+  color: var(--text-tertiary);
 }
 
-.stat-divider {
-  width: 1px;
-  height: 18px;
-  background: rgba(255,255,255,0.15);
-  flex-shrink: 0;
+/* 分类标签行 */
+.hero-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--spacing-sm);
+}
+
+.hero-tag-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-lighter);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.hero-tag-item:hover {
+  background: var(--primary-gradient-soft);
+  color: var(--primary-dark);
+  border-color: rgba(15, 118, 110, 0.25);
+}
+
+.hero-tag-emoji {
+  font-size: 12px;
+  line-height: 1;
 }
 
 /* ════════════════════════════════════════
@@ -919,18 +948,15 @@ export default {
 
 @media (max-width: 768px) {
   .hero-banner {
-    padding: var(--spacing-xl) var(--spacing-md) 0;
+    padding: var(--spacing-xl) var(--spacing-md);
     border-radius: var(--radius-md);
   }
 
   .hero-title { font-size: var(--font-size-3xl); }
 
-  .hero-stats {
-    flex-wrap: wrap;
-    justify-content: center;
-    border-radius: var(--radius-xl);
-    gap: var(--spacing-base);
-  }
+  .hero-stats { gap: var(--spacing-sm); }
+  .hero-tags { gap: var(--spacing-xs); }
+  .hero-tag-item { padding: 4px 10px; font-size: 11px; }
 
   .section-block {
     padding: var(--spacing-lg);

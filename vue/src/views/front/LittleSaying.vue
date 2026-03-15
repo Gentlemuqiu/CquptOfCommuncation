@@ -88,8 +88,6 @@
               v-model="entity.description"
               placeholder="请简要描述该信息的主要内容，包括岗位要求、薪资待遇、申请方式等..."
               :rows="5"
-              maxlength="300"
-              show-word-limit
               class="desc-textarea"
             />
           </el-form-item>
@@ -186,7 +184,8 @@
 </template>
 
 <script>
-import request from "@/utils/request";
+import { getCurrentUser } from '@/utils/auth'
+import { createMovie } from '@/api/movie'
 import { INFO_AREAS } from "@/config/navigation";
 import {
   EditPen, Document, Picture, InfoFilled, ArrowLeft, Promotion
@@ -225,13 +224,13 @@ export default {
     };
   },
   created() {
-    const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+    const user = getCurrentUser()
     if (!user.id) {
-      this.$message.warning("请先登录后再发布信息");
-      this.$router.push("/login");
-      return;
+      this.$message.warning('请先登录后再发布信息')
+      this.$router.push('/login')
+      return
     }
-    this.entity.postUserId = user.id;
+    this.entity.postUserId = user.id
   },
   methods: {
     fileSuccessUpload(res) {
@@ -253,7 +252,7 @@ export default {
         if (!valid) return;
         this.saving = true;
         try {
-          const res = await request.post("/movie", this.entity);
+          const res = await createMovie(this.entity);
           if (res.code === '0') {
             this.$message.success("发布成功！");
             this.$router.push('/front/home');

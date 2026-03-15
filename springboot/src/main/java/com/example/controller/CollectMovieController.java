@@ -25,8 +25,8 @@ public class CollectMovieController {
     public Result<?> save(@RequestBody CollectMovie collectMovie) {
         CollectMovie collectMovie1 =
                 collectMovieMapper.selectOne(Wrappers.<CollectMovie>lambdaQuery()
-                        .eq(CollectMovie::getMovieId, collectMovie.getMovieId())
-                        .eq(CollectMovie::getUserId, collectMovie.getUserId()));
+                        .eq(CollectMovie::getMovieid, collectMovie.getMovieid())
+                        .eq(CollectMovie::getUserid, collectMovie.getUserid()));
         if (collectMovie1 != null) {
             return Result.error("-1", "您已收藏过了");
         }
@@ -46,6 +46,22 @@ public class CollectMovieController {
         return Result.success();
     }
 
+    /**
+     * 按 userid + movieid 取消收藏
+     */
+    @DeleteMapping("/delete")
+    public Result<?> deleteByUserAndMovie(
+            @RequestParam Integer userid,
+            @RequestParam Integer movieid) {
+        int n = collectMovieMapper.delete(Wrappers.<CollectMovie>lambdaQuery()
+                .eq(CollectMovie::getUserid, userid)
+                .eq(CollectMovie::getMovieid, movieid));
+        if (n == 0) {
+            return Result.error("-1", "未找到该收藏记录");
+        }
+        return Result.success();
+    }
+
     @GetMapping("/{id}")
     public Result<?> findById(@PathVariable Long id) {
         return Result.success(collectMovieMapper.selectById(id));
@@ -60,7 +76,7 @@ public class CollectMovieController {
     @GetMapping("/page")
     public Result<?> findPage(
             @RequestParam(required = false, defaultValue = "") String name,
-            @RequestParam(required = false) Integer userId, // 新增 userId 参数
+            @RequestParam(required = false) Integer userid, // 新增 userid 参数
             @RequestParam(required = false, defaultValue = "1") Integer pageNum,
             @RequestParam(required = false, defaultValue = "10") Integer pageSize) {
         LambdaQueryWrapper<CollectMovie> query =
@@ -69,8 +85,8 @@ public class CollectMovieController {
         if (StrUtil.isNotBlank(name)) {
             query.like(CollectMovie::getName, name); // 根据名称模糊查询
         }
-        if (userId != null) {
-            query.eq(CollectMovie::getUserId, userId); // 根据用户ID查询
+        if (userid != null) {
+            query.eq(CollectMovie::getUserid, userid); // 根据用户ID查询
         }
         IPage<CollectMovie> page =
                 collectMovieMapper.selectPage(new Page<>(pageNum, pageSize), query);

@@ -146,7 +146,7 @@
 </template>
 
 <script>
-import request from "@/utils/request";
+import { resetPassVerify, resetPass } from '@/api/user'
 import { User, Phone, Lock, Check, CircleCheckFilled } from '@element-plus/icons-vue';
 
 export default {
@@ -190,7 +190,7 @@ export default {
       if (!valid) return;
       this.loading = true;
       try {
-        const res = await request.post('/user/resetPassVerify', this.verifyData);
+        const res = await resetPassVerify(this.verifyData);
         if (res.code === '0') {
           this.$message.success('身份验证通过');
           this.step = 2;
@@ -209,7 +209,7 @@ export default {
       if (!valid) return;
       this.loading = true;
       try {
-        const res = await request.post('/user/resetPass', {
+        const res = await resetPass({
           username: this.verifyData.username,
           phone: this.verifyData.phone,
           password: this.resetData.password

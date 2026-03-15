@@ -51,12 +51,12 @@ public class CollectMovie extends Model<CollectMovie> {
       * 用户ID（映射数据库列 userid）
       */
     @TableField("userid")
-    private Integer userId;
+    private Integer userid;
 
     /**
       * 信息ID（映射数据库列 movieid）
       */
     @TableField("movieid")
-    private Integer movieId;
+    private Integer movieid;
 
 }

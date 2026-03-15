@@ -90,53 +90,69 @@
 </template>
 
 <script>
-import request from "@/utils/request";
+import { getUserPage, updateUser, deleteUser } from '@/api/user'
 import { UserFilled, Search } from '@element-plus/icons-vue'
 
 export default {
-  name: "User",
+  name: 'User',
   components: { UserFilled, Search },
   data() {
     return {
       loading: false,
-      search: "",
+      search: '',
       pageNum: 1,
       pageSize: 10,
       total: 0,
       tableData: [],
-    };
+    }
   },
-  created() { this.load(); },
+  created() {
+    this.load()
+  },
   methods: {
     load() {
-      this.loading = true;
-      request.get("/user/page", {
-        params: { pageNum: this.pageNum, pageSize: this.pageSize, search: this.search }
-      }).then(res => {
-        this.loading = false;
-        this.tableData = res.data.records.filter(item => item.role !== 1);
-        this.total = this.tableData.length;
-      }).catch(() => { this.loading = false; });
+      this.loading = true
+      getUserPage({
+        pageNum: this.pageNum,
+        pageSize: this.pageSize,
+        search: this.search
+      })
+        .then(res => {
+          this.tableData = (res.data.records || []).filter(item => item.role !== 1)
+          this.total = this.tableData.length
+        })
+        .catch(() => {})
+        .finally(() => { this.loading = false })
     },
     handleDelete(id) {
-      request.delete(`/user/${id}`).then(res => {
-        if (res.code === '0') { this.$message.success('删除成功'); this.load(); }
-        else this.$message.error(res.msg);
-      });
+      deleteUser(id).then(res => {
+        if (res.code === '0') {
+          this.$message.success('删除成功')
+          this.load()
+        } else {
+          this.$message.error(res.msg)
+        }
+      })
     },
     change(row, field) {
-      request.put('/user', row).then(res => {
+      updateUser(row).then(res => {
         if (res.code === '0') {
-          this.$message.success(field === 'forbidComment' ? '评论权限已更新' : '登录权限已更新');
+          this.$message.success(field === 'forbidComment' ? '评论权限已更新' : '登录权限已更新')
         } else {
-          this.$message.error(res.msg);
+          this.$message.error(res.msg)
         }
-      });
+      })
     },
-    handleSizeChange(ps) { this.pageSize = ps; this.load(); },
-    handleCurrentChange(pn) { this.pageNum = pn; this.load(); },
+    handleSizeChange(ps) {
+      this.pageSize = ps
+      this.load()
+    },
+    handleCurrentChange(pn) {
+      this.pageNum = pn
+      this.load()
+    },
   }
-};
+}
 </script>
 
 <style scoped></style>

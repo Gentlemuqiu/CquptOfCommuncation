@@ -96,10 +96,10 @@ public class MovieController {
     /**
      * 按用户ID查询该用户发布的作品
      */
-    @GetMapping("/user/{userId}")
-    public Result<?> findMovieByUserId(@PathVariable Long userId) {
+    @GetMapping("/user/{userid}")
+    public Result<?> findMovieByUserid(@PathVariable Long userid) {
         List<Movie> list = movieMapper.selectList(
-                Wrappers.<Movie>lambdaQuery().eq(Movie::getPostUserId, userId).orderByDesc(Movie::getId));
+                Wrappers.<Movie>lambdaQuery().eq(Movie::getPostUserId, userid).orderByDesc(Movie::getId));
         return Result.success(list);
     }
 

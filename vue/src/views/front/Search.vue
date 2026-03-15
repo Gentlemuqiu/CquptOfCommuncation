@@ -52,30 +52,38 @@
 </template>
 
 <script>
-import request from "@/utils/request";
+import { searchMovie } from '@/api/movie'
 
 export default {
-  name: "Search",
+  name: 'Search',
   data() {
     return {
       keyword: '',
       tableData: []
-    };
+    }
   },
-  created() { this.fetchData(); },
+  created() {
+    this.fetchData()
+  },
   watch: {
     '$route.query.name': { handler: 'fetchData', immediate: true }
   },
   methods: {
     fetchData() {
-      this.keyword = this.$route.query.name || '';
-      if (!this.keyword) { this.tableData = []; return; }
-      request.get("/movie/search", { params: { name: this.keyword } })
-        .then(res => { this.tableData = res.data || []; })
-        .catch(() => { this.tableData = []; this.$message.error('搜索失败'); });
+      this.keyword = this.$route.query.name || ''
+      if (!this.keyword) {
+        this.tableData = []
+        return
+      }
+      searchMovie({ name: this.keyword })
+        .then(res => { this.tableData = res.data || [] })
+        .catch(() => {
+          this.tableData = []
+          this.$message.error('搜索失败')
+        })
     }
   }
-};
+}
 </script>
 
 <style scoped>

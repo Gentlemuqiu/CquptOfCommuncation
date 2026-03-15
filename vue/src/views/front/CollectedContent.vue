@@ -88,7 +88,7 @@
                     title="确定取消收藏吗？"
                     confirm-button-text="取消收藏"
                     cancel-button-text="再想想"
-                    @confirm.stop="handleDelete(item.id)"
+                    @confirm.stop="handleDelete(item)"
                   >
                     <template #reference>
                       <el-button
@@ -128,11 +128,12 @@
 </template>
 
 <script>
-import request from "@/utils/request";
+import { getCurrentUser } from '@/utils/auth'
+import { getCollectPage, removeCollect } from '@/api/collectMovie'
 import { Collection, House, Picture, StarFilled, View } from '@element-plus/icons-vue'
 
 export default {
-  name: "CollectedContent",
+  name: 'CollectedContent',
   components: { Collection, House, Picture, StarFilled, View },
   data() {
     return {
@@ -141,33 +142,67 @@ export default {
       pageSize: 12,
       total: 0,
       tableData: [],
-      user: JSON.parse(sessionStorage.getItem("user") || "{}")
-    };
+      user: {}
+    }
   },
-  created() { this.load(); },
+  created() {
+    this.load()
+  },
   methods: {
     load() {
-      this.loading = true;
-      request.get("/collectMovie/page", {
-        params: { pageNum: this.pageNum, pageSize: this.pageSize, userId: this.user.id }
-      }).then(res => {
-        this.loading = false;
+      this.user = getCurrentUser()
+      if (!this.user.id) {
+        this.tableData = []
+        this.total = 0
+        return
+      }
+      this.loading = true
+      getCollectPage({
+        pageNum: this.pageNum,
+        pageSize: this.pageSize,
+        userid: this.user.id,
+        userId: this.user.id
+      })
+        .then(res => {
+          if (res.code === '0') {
+            this.tableData = res.data.records || []
+            this.total = res.data.total || 0
+          }
+        })
+        .catch(() => {})
+        .finally(() => { this.loading = false })
+    },
+    handleDelete(item) {
+      this.user = getCurrentUser()
+      if (!this.user.id) {
+        this.$message.warning('请先登录')
+        return
+      }
+      const movieId = item.movieId != null ? item.movieId : item.movieid
+      if (movieId == null) {
+        this.$message.error('数据错误，无法取消收藏')
+        return
+      }
+      removeCollect(this.user.id, movieId).then(res => {
         if (res.code === '0') {
-          this.tableData = res.data.records || [];
-          this.total = res.data.total || 0;
+          this.$message.success('已取消收藏')
+          this.load()
+        } else {
+          this.$message.error(res.msg || '取消失败')
         }
-      }).catch(() => { this.loading = false; });
+      }).catch(() => this.$message.error('网络异常'))
     },
-    handleDelete(id) {
-      request.delete(`/collectMovie/${id}`).then(res => {
-        if (res.code === '0') { this.$message.success('已取消收藏'); this.load(); }
-        else this.$message.error(res.msg);
-      });
+    handleSizeChange(ps) {
+      this.pageSize = ps
+      this.pageNum = 1
+      this.load()
     },
-    handleSizeChange(ps) { this.pageSize = ps; this.pageNum = 1; this.load(); },
-    handleCurrentChange(pn) { this.pageNum = pn; this.load(); },
+    handleCurrentChange(pn) {
+      this.pageNum = pn
+      this.load()
+    },
   }
-};
+}
 </script>
 
 <style scoped>

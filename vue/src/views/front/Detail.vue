@@ -3,26 +3,6 @@
 
     <!-- ════════════ 帖子主信息区 ════════════ -->
     <div class="post-main-card">
-      <!-- 封面图 -->
-      <div class="post-cover" @click="showVideo">
-        <el-image :src="info.img" fit="cover" class="cover-img">
-          <template #error>
-            <div class="cover-fallback">
-              <el-icon><Picture /></el-icon>
-            </div>
-          </template>
-        </el-image>
-        <!-- 视频播放按钮 -->
-        <div class="play-btn" v-if="info.url">
-          <el-icon><VideoPlay /></el-icon>
-        </div>
-        <!-- 封面遮罩 -->
-        <div class="cover-overlay" v-if="info.url">
-          <span>点击播放视频</span>
-        </div>
-      </div>
-
-      <!-- 信息区 -->
       <div class="post-info">
         <!-- 分类徽章 -->
         <div class="info-badges">
@@ -53,16 +33,15 @@
           <button
             class="action-btn collect-btn"
             :class="{ active: collectFlag }"
-            @click="collectMovie"
-            title="收藏"
+            @click="collectFlag ? cancelCollect() : collectMovie()"
+            :title="collectFlag ? '取消收藏' : '收藏'"
           >
             <el-icon><Star /></el-icon>
-            <span>收藏</span>
+            <span>{{ collectFlag ? '取消收藏' : '收藏' }}</span>
           </button>
 
           <button
             class="action-btn zan-btn"
-            :class="{ active: zanFlag }"
             @click="zan"
           >
             <el-icon><Sunny /></el-icon>
@@ -71,13 +50,64 @@
 
           <button
             class="action-btn cai-btn"
-            :class="{ active: caiFlag }"
             @click="cai"
           >
             <el-icon><SemiSelect /></el-icon>
             <span>踩 {{ info.cai || 0 }}</span>
           </button>
 
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════ 发布者信息 ════════════ -->
+    <div class="publisher-card" v-if="publisherUsername">
+      <div class="section-hd">
+        <div class="section-hd-left">
+          <div class="hd-icon-wrap green">
+            <el-icon><User /></el-icon>
+          </div>
+          <div>
+            <h2 class="section-hd-title">发布者</h2>
+            <p class="section-hd-sub">本条信息的发布者</p>
+          </div>
+        </div>
+      </div>
+      <div class="publisher-body">
+        <el-avatar :size="52" class="publisher-avatar" :src="publisherAvatar">
+          {{ publisherInitial }}
+        </el-avatar>
+        <div class="publisher-info">
+          <h3 class="publisher-name">{{ publisherDisplayName }}</h3>
+          <p class="publisher-username">@{{ publisherUsername }}</p>
+        </div>
+        <div class="publisher-actions">
+          <el-button type="primary" size="small" class="view-works-btn" @click="viewAuthorWorks">
+            <el-icon><Document /></el-icon>
+            TA的作品
+          </el-button>
+          <template v-if="user.id && user.username !== publisherUsername">
+            <el-button
+              v-if="!followingPublisher"
+              type="primary"
+              size="small"
+              plain
+              class="follow-btn"
+              @click="followPublisher"
+            >
+              <el-icon><Plus /></el-icon>
+              关注
+            </el-button>
+            <el-button
+              v-else
+              size="small"
+              class="following-btn"
+              @click="unfollowPublisher"
+            >
+              <el-icon><Check /></el-icon>
+              已关注
+            </el-button>
+          </template>
         </div>
       </div>
     </div>
@@ -176,26 +206,6 @@
       </div>
     </div>
 
-    <!-- 视频弹窗 -->
-    <el-dialog
-      :title="info.name || '视频播放'"
-      v-model="videoDialogVisible"
-      width="70%"
-      :before-close="handleCloseVideo"
-      class="video-dialog"
-    >
-      <video
-        v-if="info.url"
-        :src="info.url"
-        controls
-        autoplay
-        class="video-player"
-      >
-        您的浏览器不支持视频播放
-      </video>
-      <div v-else class="no-video">暂无视频资源</div>
-    </el-dialog>
-
     <!-- 回复弹窗 -->
     <el-dialog title="回复评论" v-model="dialogFormVisible" width="420px" class="reply-dialog">
       <el-input
@@ -215,171 +225,285 @@
 </template>
 
 <script>
-import request from "@/utils/request";
+import { getCurrentUser } from '@/utils/auth'
+import { getMovieById, updateMovie } from '@/api/movie'
+import { getUserById } from '@/api/user'
+import { getCollectPage, addCollect, removeCollect } from '@/api/collectMovie'
+import { getFollowListByUser, followAuthor, unfollowAuthor } from '@/api/lookAuthor'
+import { getMessageByForeign, addMessage, deleteMessage } from '@/api/message'
+import { submitJubao } from '@/api/jubao'
 import {
-  Picture, VideoPlay, Collection, Calendar, Star, Sunny,
+  Collection, Calendar, Star, Sunny,
   SemiSelect, EditPen, Warning, Delete, ChatDotRound, ChatLineRound,
-  Promotion
+  Promotion, User, Document, Plus, Check
 } from '@element-plus/icons-vue'
 
 export default {
-  name: "Detail",
+  name: 'Detail',
   components: {
-    Picture, VideoPlay, Collection, Calendar, Star, Sunny,
+    Collection, Calendar, Star, Sunny,
     SemiSelect, EditPen, Warning, Delete, ChatDotRound, ChatLineRound,
-    Promotion
+    Promotion, User, Document, Plus, Check
   },
   data() {
     return {
-      videoDialogVisible: false,
       info: {},
       messages: [],
       dialogFormVisible: false,
       entity: {},
       user: {},
-      zanFlag: false,
-      caiFlag: false,
       collectFlag: false,
+      publisherUsername: '',
+      publisherAvatar: '',
+      publisherDisplayName: '',
+      followingPublisher: false,
+    }
+  },
+  computed: {
+    publisherInitial() {
+      return this.publisherUsername ? this.publisherUsername[0].toUpperCase() : 'U'
     }
   },
   created() {
-    this.user = sessionStorage.getItem("user") ? JSON.parse(sessionStorage.getItem("user")) : {}
+    this.user = getCurrentUser()
     this.load()
-    let id = location.search.split("=")[1]
-    this.loadMessage(id);
+    const id = location.search.split('=')[1]
+    if (id) this.loadMessage(id)
   },
   methods: {
+    refreshUser() {
+      this.user = getCurrentUser()
+      return this.user
+    },
     checkLogin() {
+      this.refreshUser()
       if (!this.user.id || !this.user.username) {
-        this.$message({ message: "请先登录", type: "warning" });
-        return false;
+        this.$message({ message: '请先登录', type: 'warning' })
+        return false
       }
-      return true;
-    },
-
-    showVideo() {
-      if (this.info.url) {
-        this.videoDialogVisible = true;
-      } else {
-        this.$message({ message: "暂无视频资源", type: "warning" });
-      }
-    },
-
-    handleCloseVideo(done) {
-      const videoElement = document.querySelector('video');
-      if (videoElement) videoElement.pause();
-      done();
+      return true
     },
 
     collectMovie() {
-      if (!this.checkLogin()) return;
-      request.post("/collectMovie/", {
+      if (!this.checkLogin()) return
+      addCollect({
         name: this.info.name,
         img: this.info.img,
         link: '/front/detail?id=' + this.info.id,
-        userId: this.user.id,
-        movieId: this.info.id
+        userid: this.user.id,
+        movieid: this.info.id
       }).then(res => {
         if (res.code === '0') {
-          this.$message({ message: "收藏成功", type: "success" });
-          this.collectFlag = true;
+          this.$message({ message: '收藏成功', type: 'success' })
+          this.collectFlag = true
         } else {
           this.$message.error(res.msg)
         }
       })
     },
 
+    cancelCollect() {
+      if (!this.checkLogin()) return
+      removeCollect(this.user.id, this.info.id).then(res => {
+        if (res.code === '0') {
+          this.$message({ message: '已取消收藏', type: 'success' })
+          this.collectFlag = false
+        } else {
+          this.$message.error(res.msg || '取消失败')
+        }
+      }).catch(() => this.$message.error('网络异常'))
+    },
+
     load() {
-      let id = location.search.split("=")[1]
-      request.get("/movie/" + id).then(res => {
-        if (res.code === '0') this.info = res.data
+      const id = location.search.split('=')[1]
+      if (!id) return
+      getMovieById(id).then(res => {
+        if (res.code === '0') {
+          this.info = res.data
+          this.checkCollectStatus()
+          this.loadPublisherInfo()
+        }
+      })
+    },
+
+    loadPublisherInfo() {
+      const info = this.info
+      const name = info.postUsername || info.postUserName
+      if (name) {
+        this.publisherUsername = name
+        this.publisherDisplayName = info.postNickName || info.postNickname || name
+        this.publisherAvatar = info.postAvatar || ''
+        this.checkFollowStatus()
+        return
+      }
+      const uid = info.postUserId != null ? info.postUserId : info.postUserid
+      if (!uid) {
+        this.publisherUsername = ''
+        return
+      }
+      getUserById(uid).then(res => {
+        if (res.code === '0' && res.data) {
+          const u = res.data
+          this.publisherUsername = u.username || ''
+          this.publisherDisplayName = u.nickName || u.nickname || u.username || this.publisherUsername
+          this.publisherAvatar = u.avatar || ''
+          this.checkFollowStatus()
+        }
+      }).catch(() => {
+        this.publisherUsername = ''
+      })
+    },
+
+    checkFollowStatus() {
+      this.refreshUser()
+      if (!this.publisherUsername || !this.user.id || !this.user.username) {
+        this.followingPublisher = false
+        return
+      }
+      getFollowListByUser(this.user.username).then(res => {
+        const list = res.data || []
+        this.followingPublisher = list.some(row => row.commentUser === this.publisherUsername)
+      }).catch(() => { this.followingPublisher = false })
+    },
+
+    viewAuthorWorks() {
+      const authorId = this.info.postUserId != null ? this.info.postUserId : this.info.postUserid
+      const query = { username: this.publisherUsername }
+      if (authorId != null) query.userId = authorId
+      this.$router.push({ path: '/front/authorWorks', query })
+    },
+
+    followPublisher() {
+      if (!this.checkLogin() || !this.publisherUsername) return
+      followAuthor({ user: this.user.username, commentUser: this.publisherUsername }).then(res => {
+        if (res.code === '0') {
+          this.$message.success('关注成功')
+          this.followingPublisher = true
+        } else {
+          this.$message.error(res.msg || '关注失败')
+        }
+      }).catch(() => this.$message.error('网络异常'))
+    },
+
+    unfollowPublisher() {
+      if (!this.checkLogin() || !this.publisherUsername) return
+      unfollowAuthor(this.user.username, this.publisherUsername).then(res => {
+        if (res.code === '0' || res.code === 0) {
+          this.$message.success('已取消关注')
+          this.followingPublisher = false
+        } else {
+          this.$message.error(res.msg || '取消失败')
+        }
+      }).catch(() => this.$message.error('网络异常'))
+    },
+
+    checkCollectStatus() {
+      this.refreshUser()
+      if (!this.user.id || !this.info.id) return
+      getCollectPage({ userid: this.user.id, userId: this.user.id, pageNum: 1, pageSize: 500 }).then(res => {
+        if (res.code === '0' && res.data.records) {
+          const mid = Number(this.info.id)
+          this.collectFlag = res.data.records.some(r =>
+            Number(r.movieId != null ? r.movieId : r.movieid) === mid
+          )
+        }
       })
     },
 
     zan() {
-      if (!this.checkLogin()) return;
-      if (this.zanFlag) { this.$message({ message: "请勿重复点赞", type: "warning" }); return }
-      this.info.zan += 1
+      if (!this.checkLogin()) return
+      const prevZan = this.info.zan || 0
+      this.info.zan = prevZan + 1
       this.entity = JSON.parse(JSON.stringify(this.info))
-      this.zanFlag = true
-      this.putInfo()
+      this.putInfo('zan', prevZan)
     },
 
     cai() {
-      if (!this.checkLogin()) return;
-      if (this.caiFlag) { this.$message({ message: "请勿重复踩", type: "warning" }); return }
-      this.info.cai += 1
+      if (!this.checkLogin()) return
+      const prevCai = this.info.cai || 0
+      this.info.cai = prevCai + 1
       this.entity = JSON.parse(JSON.stringify(this.info))
-      this.caiFlag = true
-      this.putInfo()
+      this.putInfo('cai', prevCai)
     },
 
-    putInfo() {
-      if (!this.checkLogin()) return;
-      request.put("/movie", this.entity).then(res => {
+    putInfo(revertKey, revertValue) {
+      if (!this.checkLogin()) return
+      updateMovie(this.entity).then(res => {
         if (res.code === '0') {
-          this.$message({ message: "操作成功", type: "success" });
+          this.$message({ message: '操作成功', type: 'success' })
         } else {
-          this.$message({ message: res.msg, type: "error" });
+          this.$message({ message: res.msg || '操作失败', type: 'error' })
+          if (revertKey === 'zan') this.info.zan = revertValue
+          else if (revertKey === 'cai') this.info.cai = revertValue
         }
         this.entity = {}
-        this.loadMessage(this.info.id);
+        this.loadMessage(this.info.id)
+      }).catch(() => {
+        this.$message({ message: '网络异常', type: 'error' })
+        if (revertKey === 'zan') this.info.zan = revertValue
+        else if (revertKey === 'cai') this.info.cai = revertValue
+        this.entity = {}
       })
     },
 
     jubao(info) {
-      if (!this.checkLogin()) return;
-      request.post('/jubao', {
-        commentId: info.id, commentUser: info.username,
-        content: info.content, user: this.user.username
+      if (!this.checkLogin()) return
+      submitJubao({
+        commentId: info.id,
+        commentUser: info.username,
+        content: info.content,
+        user: this.user.username
       }).then(res => {
-        this.$message({ message: res.code === '0' ? "投诉成功" : "感谢你为社区做出贡献！", type: "success" });
+        this.$message({ message: res.code === '0' ? '投诉成功' : '感谢你为社区做出贡献！', type: 'success' })
       })
     },
 
     loadMessage(id) {
-      request.get("/message/foreign/" + id + "/1").then(res => { this.messages = res.data; })
+      getMessageByForeign(id, 1).then(res => { this.messages = res.data || [] })
     },
 
     cancel() {
-      this.dialogFormVisible = false;
-      this.entity.reply = '';
+      this.dialogFormVisible = false
+      this.entity.reply = ''
     },
 
     reReply(id) {
-      if (!this.checkLogin()) return;
-      this.dialogFormVisible = true;
-      this.entity.parentId = id;
+      if (!this.checkLogin()) return
+      this.dialogFormVisible = true
+      this.entity.parentId = id
     },
 
     reply() {
-      if (!this.checkLogin()) return;
-      this.entity.content = this.entity.reply;
-      this.save();
+      if (!this.checkLogin()) return
+      this.entity.content = this.entity.reply
+      this.save()
     },
 
     save() {
-      if (!this.checkLogin()) return;
-      if (!this.entity.content) { this.$message({ message: "请填写内容", type: "warning" }); return; }
+      if (!this.checkLogin()) return
+      if (!this.entity.content) {
+        this.$message({ message: '请填写内容', type: 'warning' })
+        return
+      }
       this.entity.username = this.user.username
       this.entity.type = 1
       this.entity.foreignId = this.info.id
-      request.post("/message", this.entity).then(res => {
+      addMessage(this.entity).then(res => {
         if (res.code === '0') {
-          this.$message({ message: "评论成功", type: "success" });
+          this.$message({ message: '评论成功', type: 'success' })
         } else {
-          this.$message({ message: res.msg, type: "error" });
+          this.$message({ message: res.msg, type: 'error' })
         }
         this.entity = {}
-        this.loadMessage(this.info.id);
-        this.dialogFormVisible = false;
+        this.loadMessage(this.info.id)
+        this.dialogFormVisible = false
       })
     },
 
     del(id) {
-      if (!this.checkLogin()) return;
-      request.delete("/message/" + id).then(() => {
-        this.$message({ message: "删除成功", type: "success" });
+      if (!this.checkLogin()) return
+      deleteMessage(id).then(() => {
+        this.$message({ message: '删除成功', type: 'success' })
         this.loadMessage(this.info.id)
       })
     }
@@ -399,86 +523,14 @@ export default {
    帖子主信息卡片
 ════════════════════════════════════════ */
 .post-main-card {
-  display: grid;
-  grid-template-columns: 360px 1fr;
-  gap: 0;
   background: var(--bg-primary);
   border-radius: var(--radius-xl);
   overflow: hidden;
   box-shadow: var(--shadow-md);
   border: 1px solid var(--border-lighter);
   margin-bottom: var(--spacing-xl);
-  min-height: 340px;
 }
 
-/* 封面图 */
-.post-cover {
-  position: relative;
-  overflow: hidden;
-  cursor: pointer;
-  background: var(--bg-tertiary);
-}
-
-.cover-img {
-  width: 100%;
-  height: 100%;
-  min-height: 340px;
-  display: block;
-  transition: transform var(--transition-slow);
-}
-
-.post-cover:hover .cover-img {
-  transform: scale(1.04);
-}
-
-.cover-fallback {
-  width: 100%;
-  height: 100%;
-  min-height: 340px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg-tertiary);
-  color: var(--text-disabled);
-  font-size: 48px;
-}
-
-.play-btn {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  width: 68px; height: 68px;
-  border-radius: 50%;
-  background: var(--primary-gradient);
-  display: flex; align-items: center; justify-content: center;
-  color: #fff;
-  font-size: 30px;
-  box-shadow: var(--shadow-primary);
-  transition: all var(--transition-cubic);
-  z-index: 2;
-}
-
-.post-cover:hover .play-btn {
-  transform: translate(-50%, -50%) scale(1.12);
-  box-shadow: var(--shadow-primary-lg);
-}
-
-.cover-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 50%);
-  display: flex;
-  align-items: flex-end;
-  padding: var(--spacing-lg);
-  color: rgba(255,255,255,0.85);
-  font-size: var(--font-size-sm);
-  opacity: 0;
-  transition: opacity var(--transition-base);
-}
-
-.post-cover:hover .cover-overlay { opacity: 1; }
-
-/* 信息区 */
 .post-info {
   padding: var(--spacing-2xl);
   display: flex;
@@ -601,15 +653,75 @@ export default {
 .cai-btn:hover { border-color: var(--text-disabled); color: var(--text-disabled); }
 .cai-btn.active { border-color: var(--text-disabled); color: var(--text-disabled); background: var(--bg-tertiary); }
 
-/* 写长评 */
-.share-btn {
-  margin-left: auto;
-  background: var(--primary-gradient);
-  border-color: var(--primary-color);
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(15,118,110,0.25);
+/* ════════════════════════════════════════
+   发布者卡片
+════════════════════════════════════════ */
+.publisher-card {
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-lighter);
+  box-shadow: var(--shadow-md);
+  padding: var(--spacing-2xl);
+  margin-bottom: var(--spacing-xl);
 }
-.share-btn:hover { box-shadow: var(--shadow-primary); }
+
+.publisher-body {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.publisher-avatar {
+  flex-shrink: 0;
+  background: var(--primary-gradient-soft);
+  color: var(--primary-color);
+  font-weight: var(--font-weight-bold);
+}
+
+.publisher-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.publisher-name {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin: 0 0 2px;
+}
+
+.publisher-username {
+  font-size: var(--font-size-sm);
+  color: var(--text-tertiary);
+  margin: 0;
+}
+
+.publisher-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+.view-works-btn,
+.follow-btn,
+.following-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.following-btn {
+  color: var(--success-color);
+  border-color: var(--success-color);
+}
+
+.following-btn:hover {
+  background: var(--success-light);
+  border-color: var(--success-color);
+  color: var(--success-color);
+}
 
 /* ════════════════════════════════════════
    评论区整体
@@ -672,100 +784,6 @@ export default {
   font-size: var(--font-size-xs);
   color: var(--text-disabled);
   margin: 0;
-}
-
-.write-btn {
-  background: var(--primary-gradient);
-  border: none;
-  border-radius: var(--radius-base);
-  font-weight: var(--font-weight-semibold);
-  box-shadow: 0 2px 8px rgba(15,118,110,0.25);
-  gap: 5px;
-}
-
-/* ════════════════════════════════════════
-   长评列表
-════════════════════════════════════════ */
-.long-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-base);
-}
-
-.long-item {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--spacing-base);
-  padding: var(--spacing-md) var(--spacing-lg);
-  background: var(--bg-secondary);
-  border-radius: var(--radius-lg);
-  border-left: 3px solid var(--primary-color);
-  transition: all var(--transition-base);
-}
-
-.long-item:hover {
-  background: var(--bg-hover);
-  box-shadow: var(--shadow-sm);
-  transform: translateX(3px);
-}
-
-.long-avatar {
-  background: var(--primary-gradient) !important;
-  color: #fff !important;
-  font-weight: var(--font-weight-bold) !important;
-  flex-shrink: 0;
-}
-
-.long-item-body {
-  flex: 1;
-  min-width: 0;
-}
-
-.long-title {
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-semibold);
-  color: var(--text-primary);
-  margin: 0 0 var(--spacing-sm);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  transition: color var(--transition-base);
-}
-
-.long-title:hover { color: var(--primary-color); }
-
-.link-arrow {
-  font-size: 13px;
-  color: var(--text-disabled);
-  opacity: 0;
-  transition: opacity var(--transition-fast), transform var(--transition-fast);
-}
-
-.long-title:hover .link-arrow {
-  opacity: 1;
-  transform: translateX(3px);
-  color: var(--primary-color);
-}
-
-.long-meta {
-  display: flex;
-  gap: var(--spacing-base);
-  flex-wrap: wrap;
-}
-
-.meta-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: var(--font-size-xs);
-  color: var(--text-disabled);
-}
-
-.long-item-actions {
-  display: flex;
-  gap: var(--spacing-xs);
-  flex-shrink: 0;
 }
 
 /* 文字操作按钮 */
@@ -976,18 +994,6 @@ export default {
 /* ════════════════════════════════════════
    弹窗
 ════════════════════════════════════════ */
-.video-player {
-  width: 100%;
-  border-radius: var(--radius-base);
-  display: block;
-}
-
-.no-video {
-  text-align: center;
-  padding: var(--spacing-3xl);
-  color: var(--text-disabled);
-}
-
 .long-preview {
   max-height: 60vh;
   overflow-y: auto;
@@ -1002,13 +1008,6 @@ export default {
    响应式
 ════════════════════════════════════════ */
 @media (max-width: 860px) {
-  .post-main-card {
-    grid-template-columns: 1fr;
-  }
-
-  .cover-img { min-height: 240px; height: 240px; }
-  .cover-fallback { min-height: 240px; }
-
   .post-info { padding: var(--spacing-lg); }
 
   .post-title { font-size: var(--font-size-2xl); }
@@ -1017,15 +1016,6 @@ export default {
 }
 
 @media (max-width: 480px) {
-  .long-item {
-    flex-wrap: wrap;
-  }
-
-  .long-item-actions {
-    width: 100%;
-    justify-content: flex-end;
-  }
-
   .action-bar {
     gap: var(--spacing-xs);
   }

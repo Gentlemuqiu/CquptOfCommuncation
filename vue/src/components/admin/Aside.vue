@@ -38,8 +38,9 @@
 </template>
 
 <script>
-import request from "@/utils/request";
-import { ADMIN_SIDEBAR_ITEMS } from "@/config/navigation";
+import { getUserById } from '@/api/user'
+import { getCurrentUser } from '@/utils/auth'
+import { ADMIN_SIDEBAR_ITEMS } from '@/config/navigation'
 import {
   Menu, Setting, UserFilled, Document,
   Warning, ChatDotRound, Bell
@@ -54,29 +55,28 @@ export default {
     return {
       user: {},
       path: this.$route.path
-    };
+    }
   },
   computed: {
     filteredItems() {
       return ADMIN_SIDEBAR_ITEMS.filter(item => {
-        if (!item.requireRole) return true;
-        return item.requireRole === this.user.role;
-      });
+        if (!item.requireRole) return true
+        return item.requireRole === this.user.role
+      })
     },
     systemItems() {
-      return this.filteredItems.filter(item => item.group === '系统管理');
+      return this.filteredItems.filter(item => item.group === '系统管理')
     },
     normalItems() {
-      return this.filteredItems.filter(item => item.group !== '系统管理');
+      return this.filteredItems.filter(item => item.group !== '系统管理')
     }
   },
   created() {
-    const userStr = sessionStorage.getItem("user") || "{}";
-    this.user = JSON.parse(userStr);
+    this.user = getCurrentUser()
     if (this.user.id) {
-      request.get("/user/" + this.user.id).then(res => {
-        if (res.code === '0') this.user = res.data;
-      });
+      getUserById(this.user.id).then(res => {
+        if (res.code === '0') this.user = res.data
+      })
     }
   },
   methods: {
@@ -89,46 +89,47 @@ export default {
 
 <style scoped>
 .admin-aside {
-  width: 220px;
+  width: 240px;
   flex-shrink: 0;
   background: var(--bg-primary);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-base);
+  border: 1px solid var(--border-lighter);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
   align-self: flex-start;
   position: sticky;
-  top: calc(60px + var(--spacing-lg));
+  top: calc(64px + var(--spacing-xl));
 }
 
-/* ── 侧边栏顶部标题 ── */
 .aside-header {
   background: var(--primary-gradient);
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: var(--spacing-lg) var(--spacing-xl);
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  color: rgba(255, 255, 255, 0.95);
+  gap: var(--spacing-base);
+  color: rgba(255, 255, 255, 0.98);
   font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-sm);
-  letter-spacing: 0.5px;
+  font-size: var(--font-size-base);
+  letter-spacing: 0.03em;
 }
 
-.aside-header-icon { font-size: 16px; }
+.aside-header-icon {
+  font-size: 18px;
+  opacity: 0.95;
+}
 
-/* ── 菜单 ── */
 .aside-menu {
   border-right: none !important;
-  padding: var(--spacing-sm) 0;
+  padding: var(--spacing-md) var(--spacing-sm);
 }
 
 .aside-menu :deep(.el-menu-item),
 .aside-menu :deep(.el-sub-menu__title) {
-  height: 46px;
-  line-height: 46px;
-  border-radius: var(--radius-sm);
-  margin: 2px var(--spacing-sm);
-  width: calc(100% - var(--spacing-md));
+  height: 48px;
+  line-height: 48px;
+  border-radius: var(--radius-base);
+  margin: 2px 0;
+  padding: 0 var(--spacing-base) !important;
   transition: all var(--transition-cubic) !important;
   font-size: var(--font-size-base) !important;
   color: var(--text-secondary) !important;
@@ -136,12 +137,11 @@ export default {
 
 .aside-menu :deep(.el-menu-item .el-icon),
 .aside-menu :deep(.el-sub-menu__title .el-icon) {
-  margin-right: var(--spacing-sm);
-  font-size: 16px;
-  transition: transform var(--transition-cubic);
+  margin-right: var(--spacing-base);
+  font-size: 18px;
+  transition: color var(--transition-fast), transform var(--transition-fast);
 }
 
-/* 悬停 */
 .aside-menu :deep(.el-menu-item:hover),
 .aside-menu :deep(.el-sub-menu__title:hover) {
   background: var(--bg-hover) !important;
@@ -150,11 +150,9 @@ export default {
 
 .aside-menu :deep(.el-menu-item:hover .el-icon),
 .aside-menu :deep(.el-sub-menu__title:hover .el-icon) {
-  transform: scale(1.12);
   color: var(--primary-color);
 }
 
-/* 激活 */
 .aside-menu :deep(.el-menu-item.is-active) {
   background: var(--primary-gradient-soft) !important;
   color: var(--primary-color) !important;
@@ -166,20 +164,18 @@ export default {
   color: var(--primary-color) !important;
 }
 
-/* 子菜单 */
 .aside-menu :deep(.el-sub-menu .el-menu) {
   background: var(--bg-secondary) !important;
   padding: var(--spacing-xs) 0;
 }
 
 .aside-menu :deep(.el-sub-menu .el-menu-item) {
-  height: 40px !important;
-  line-height: 40px !important;
-  padding-left: 48px !important;
+  height: 42px !important;
+  line-height: 42px !important;
+  padding-left: 52px !important;
   font-size: var(--font-size-sm) !important;
 }
 
-/* ── 响应式 ── */
 @media (max-width: 900px) {
   .admin-aside {
     width: 100%;

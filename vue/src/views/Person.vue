@@ -236,7 +236,8 @@ import {
   Plus, User, Camera, Edit, Lock, Key, Check,
   Location, Phone, Calendar, Male, Female, Postcard
 } from '@element-plus/icons-vue'
-import request from "@/utils/request"
+import { updateUser, updatePassword } from '@/api/user'
+import { getCurrentUser, setUser } from '@/utils/auth'
 
 export default {
   name: "Person",
@@ -305,9 +306,8 @@ export default {
   methods: {
     loadUserInfo() {
       try {
-        const userStr = sessionStorage.getItem("user")
-        if (userStr) {
-          const userData = JSON.parse(userStr)
+        const userData = getCurrentUser()
+        if (userData && userData.id) {
           this.form = {
             id: userData.id || '',
             username: userData.username || '',
@@ -340,11 +340,11 @@ export default {
           return
         }
         this.loading = true
-        const response = await request.put('/user', { ...this.form })
+        const response = await updateUser({ ...this.form })
         if (response.code === '0') {
           this.$message.success('保存成功！')
           this.originalForm = { ...this.form }
-          sessionStorage.setItem('user', JSON.stringify(this.form))
+          setUser(this.form)
         } else {
           throw new Error(response.msg || '保存失败')
         }
@@ -360,7 +360,7 @@ export default {
         const valid = await this.$refs.passwordFormRef.validate()
         if (!valid) return
         this.pwdLoading = true
-        const response = await request.put('/user/password', {
+        const response = await updatePassword({
           id: this.form.id,
           oldPassword: this.passwordForm.oldPassword,
           newPassword: this.passwordForm.newPassword
@@ -391,7 +391,7 @@ export default {
       if (res.code === '0') {
         this.form.avatar = res.data
         this.$message.success('头像上传成功！')
-        sessionStorage.setItem('user', JSON.stringify(this.form))
+        setUser(this.form)
       } else {
         this.$message.error(res.msg || '上传失败')
       }

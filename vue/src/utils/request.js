@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { getCurrentUser } from '@/utils/auth'
 
 const baseUrl = process.env.VUE_APP_BASEURL || '/api'
 
@@ -7,11 +8,11 @@ const request = axios.create({
   timeout: 10000
 })
 
-// 请求拦截器：统一注入 userid
+// 请求拦截器：仅在有登录用户时注入 userid，避免未登录时传 0 导致后端返回全部数据
 request.interceptors.request.use(config => {
   config.headers['Content-Type'] = 'application/json;charset=utf-8'
-  const user = sessionStorage.getItem('user')
-  config.headers['userid'] = user ? JSON.parse(user).id : 0
+  const u = getCurrentUser()
+  if (u && u.id != null) config.headers['userid'] = u.id
   return config
 }, error => Promise.reject(error))
 

@@ -142,19 +142,6 @@
             </el-button>
           </el-upload>
         </el-form-item>
-        <el-form-item label="视频">
-          <el-upload
-            :action="uploadUrl"
-            :on-success="videoSuccessUpload"
-            :file-list="videoList"
-            :limit="1"
-            accept="video/*"
-          >
-            <el-button type="default">
-              <el-icon><Upload /></el-icon>上传视频
-            </el-button>
-          </el-upload>
-        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取 消</el-button>
@@ -165,15 +152,14 @@
 </template>
 
 <script>
-import request from "@/utils/request";
-import { INFO_AREAS } from "@/config/navigation";
+import { getMoviePage, createMovie, updateMovie, deleteMovie } from '@/api/movie'
+import { INFO_AREAS } from '@/config/navigation'
 import { Document, Plus, Search, Upload } from '@element-plus/icons-vue'
 
-const URL = "/movie";
-const UPLOAD_URL = (process.env.VUE_APP_BASEURL || '/api') + '/files/upload';
+const UPLOAD_URL = (process.env.VUE_APP_BASEURL || '/api') + '/files/upload'
 
 export default {
-  name: "Sayings",
+  name: 'Sayings',
   components: { Document, Plus, Search, Upload },
   data() {
     return {
@@ -182,72 +168,82 @@ export default {
       loading: false,
       entity: {},
       dialogVisible: false,
-      search: "",
+      search: '',
       pageNum: 1,
       pageSize: 10,
       total: 0,
       tableData: [],
       fileList: [],
-      videoList: [],
       rules: {
-        name:        [{ required: true, message: "请输入标题", trigger: "blur" }],
-        description: [{ required: true, message: "请输入简介", trigger: "blur" }],
-        date:        [{ required: true, message: "请选择发布日期", trigger: "change" }],
-        area:        [{ required: true, message: "请选择分类", trigger: "change" }],
+        name: [{ required: true, message: '请输入标题', trigger: 'blur' }],
+        description: [{ required: true, message: '请输入简介', trigger: 'blur' }],
+        date: [{ required: true, message: '请选择发布日期', trigger: 'change' }],
+        area: [{ required: true, message: '请选择分类', trigger: 'change' }],
       }
-    };
+    }
   },
-  created() { this.load(); },
+  created() {
+    this.load()
+  },
   methods: {
     load() {
-      this.loading = true;
-      request.get(URL + "/page", {
-        params: { pageNum: this.pageNum, pageSize: this.pageSize, search: this.search }
-      }).then(res => {
-        this.loading = false;
-        this.tableData = res.data.records;
-        this.total = res.data.total;
-      }).catch(() => { this.loading = false; });
+      this.loading = true
+      getMoviePage({
+        pageNum: this.pageNum,
+        pageSize: this.pageSize,
+        search: this.search
+      })
+        .then(res => {
+          this.tableData = res.data.records || []
+          this.total = res.data.total || 0
+        })
+        .catch(() => {})
+        .finally(() => { this.loading = false })
     },
     add() {
-      this.entity = { name: "", description: "", date: "", area: "", img: "", url: "" };
-      this.fileList = [];
-      this.videoList = [];
-      this.dialogVisible = true;
+      this.entity = { name: '', description: '', date: '', area: '', img: '' }
+      this.fileList = []
+      this.dialogVisible = true
     },
     save() {
       this.$refs.entityForm.validate(valid => {
-        if (!valid) return;
-        const method = this.entity.id ? "put" : "post";
-        request[method](URL, this.entity).then(res => {
+        if (!valid) return
+        const fn = this.entity.id ? updateMovie : createMovie
+        fn(this.entity).then(res => {
           if (res.code === '0') {
-            this.$message.success(this.entity.id ? '更新成功' : '新增成功');
-            this.load();
-            this.dialogVisible = false;
+            this.$message.success(this.entity.id ? '更新成功' : '新增成功')
+            this.load()
+            this.dialogVisible = false
           } else {
-            this.$message.error(res.msg);
+            this.$message.error(res.msg)
           }
-        });
-      });
+        })
+      })
     },
     handleEdit(row) {
-      this.entity = { ...row };
-      this.fileList = [];
-      this.videoList = [];
-      this.dialogVisible = true;
+      this.entity = { ...row }
+      this.fileList = []
+      this.dialogVisible = true
     },
     handleDelete(id) {
-      request.delete(URL + "/" + id).then(() => {
-        this.$message.success('删除成功');
-        this.load();
-      });
+      deleteMovie(id).then(() => {
+        this.$message.success('删除成功')
+        this.load()
+      })
     },
-    fileSuccessUpload(res) { this.entity.img = res.data; },
-    videoSuccessUpload(res) { this.entity.url = res.data; },
-    handleSizeChange(pageSize) { this.pageSize = pageSize; this.load(); },
-    handleCurrentChange(pageNum) { this.pageNum = pageNum; this.load(); },
+    fileSuccessUpload(res) {
+      this.entity.img = res.data
+    },
+    handleSizeChange(pageSize) {
+      this.pageSize = pageSize
+      this.load()
+    },
+    handleCurrentChange(pageNum) {
+      this.pageNum = pageNum
+      this.load()
+    },
   }
-};
+}
 </script>
 
 <style scoped></style>

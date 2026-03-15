@@ -55,55 +55,55 @@
 
 <script>
 import { Grid, House, ArrowDown, User, SwitchButton } from '@element-plus/icons-vue'
+import { getCurrentUser, clearUser } from '@/utils/auth'
 
 export default {
-  name: "AdminHeader",
+  name: 'AdminHeader',
   components: { Grid, House, ArrowDown, User, SwitchButton },
   data() {
     return {
       user: {},
-      defaultAvatar: "https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png"
-    };
+      defaultAvatar: 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
+    }
   },
   created() {
-    const str = sessionStorage.getItem("user") || "{}";
-    this.user = JSON.parse(str);
+    this.user = getCurrentUser()
   },
   methods: {
     handleAvatarError(e) {
-      e.target.src = this.defaultAvatar;
+      e.target.src = this.defaultAvatar
     },
     handleLogout() {
-      sessionStorage.removeItem("user");
-      this.$message.success('已退出系统');
-      this.$router.push('/login');
+      clearUser()
+      this.$message.success('已退出系统')
+      this.$router.push('/login')
     }
   }
-};
+}
 </script>
 
 <style scoped>
 .admin-header {
-  height: 60px;
-  padding: 0 var(--spacing-xl);
+  height: 64px;
+  padding: 0 var(--spacing-2xl);
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
-  background: #ffffff;
-  border-bottom: 1px solid var(--border-light);
+  gap: var(--spacing-lg);
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-lighter);
   position: sticky;
   top: 0;
   z-index: var(--z-sticky);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
-/* 顶部渐变线 */
 .admin-header::before {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
-  height: 2px;
+  height: 3px;
   background: var(--primary-gradient);
+  opacity: 0.9;
 }
 
 /* ── 品牌区域 ── */
@@ -115,16 +115,16 @@ export default {
 }
 
 .brand-icon {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   background: var(--primary-gradient);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 3px 8px rgba(15, 118, 110, 0.3);
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.35);
   color: #fff;
-  font-size: 18px;
+  font-size: 20px;
 }
 
 .brand-text {
@@ -135,10 +135,11 @@ export default {
 
 .header-title {
   margin: 0;
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
   color: var(--text-primary);
-  line-height: 1.2;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
 }
 
 .header-subtitle {

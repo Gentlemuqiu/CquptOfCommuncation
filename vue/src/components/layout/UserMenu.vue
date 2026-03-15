@@ -1,15 +1,5 @@
 <template>
   <div class="user-section">
-    <!-- 通知图标 -->
-    <el-badge :value="noticeCount" :hidden="noticeCount === 0" class="notice-badge">
-      <el-button
-        circle
-        :icon="Bell"
-        class="notice-btn"
-        @click="handleNoticeClick"
-      />
-    </el-badge>
-
     <!-- 登录按钮 -->
     <el-button
       v-if="!user.id"
@@ -55,25 +45,21 @@
 </template>
 
 <script>
-import { getUserDropdownItems } from '@/config/navigation';
-import { Bell, ArrowDown, SwitchButton } from '@element-plus/icons-vue';
+import { getUserDropdownItems } from '@/config/navigation'
+import { clearUser } from '@/utils/auth'
+import { ArrowDown, SwitchButton } from '@element-plus/icons-vue'
 
 export default {
   name: 'UserMenu',
-  components: { Bell, ArrowDown, SwitchButton },
+  components: { ArrowDown, SwitchButton },
   props: {
     user: {
       type: Object,
       default: () => ({})
-    },
-    noticeCount: {
-      type: Number,
-      default: 0
     }
   },
   data() {
     return {
-      Bell,
       defaultAvatar: 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
     }
   },
@@ -83,9 +69,6 @@ export default {
     }
   },
   methods: {
-    handleNoticeClick() {
-      this.$emit('show-notice');
-    },
     handleLogin() {
       this.$router.push('/login');
     },
@@ -96,10 +79,9 @@ export default {
       e.target.src = this.defaultAvatar;
     },
     handleLogout() {
-      sessionStorage.removeItem("user");
-      window.dispatchEvent(new Event('userUpdate'));
-      this.$message.success('已退出登录');
-      this.$router.push('/login');
+      clearUser()
+      this.$message.success('已退出登录')
+      this.$router.push('/login')
     }
   }
 }
@@ -111,25 +93,6 @@ export default {
   align-items: center;
   gap: var(--spacing-md);
   flex-shrink: 0;
-}
-
-.notice-badge {
-  cursor: pointer;
-}
-
-.notice-btn {
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: var(--font-size-xl);
-  transition: all var(--transition-base);
-  width: 40px;
-  height: 40px;
-}
-
-.notice-btn:hover {
-  color: var(--primary-color);
-  background-color: #ecfeff;
 }
 
 .login-btn {

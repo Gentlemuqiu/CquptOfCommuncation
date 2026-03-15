@@ -10,7 +10,7 @@
           </div>
           <div class="hero-text">
             <h1>我关注的人</h1>
-            <p>关注感兴趣的作者，及时获取他们的最新长评</p>
+            <p>关注感兴趣的作者，随时查看 TA 发布的就业信息</p>
           </div>
         </div>
         <div class="hero-right" v-if="table.length > 0">
@@ -64,14 +64,7 @@
             <!-- 用户信息 -->
             <div class="user-info">
               <h3 class="user-name">{{ row.commentUser }}</h3>
-              <p class="user-role">
-                <el-icon><EditPen /></el-icon>
-                长评作者
-              </p>
             </div>
-
-            <!-- 分割线 -->
-            <div class="card-divider"></div>
 
             <!-- 操作按钮 -->
             <div class="card-actions">
@@ -106,37 +99,44 @@
 </template>
 
 <script>
-import request from "@/utils/request";
-import { User, House, Check, EditPen, Remove, Picture } from '@element-plus/icons-vue'
+import { getCurrentUser } from '@/utils/auth'
+import { getFollowListByUser, unfollowAuthor } from '@/api/lookAuthor'
+import { User, House, Check, Remove, Picture } from '@element-plus/icons-vue'
 
 export default {
-  name: "SubscribePerson",
-  components: { User, House, Check, EditPen, Remove, Picture },
+  name: 'SubscribePerson',
+  components: { User, House, Check, Remove, Picture },
   data() {
     return {
-      user: JSON.parse(sessionStorage.getItem("user") || "{}"),
+      user: {},
       table: []
-    };
+    }
   },
-  created() { this.load(); },
+  created() {
+    this.user = getCurrentUser()
+    this.load()
+  },
   methods: {
     load() {
-      request.get("/lookAuthor/user/" + this.user.username).then(res => {
-        this.table = res.data || [];
-      });
+      if (!this.user.username) {
+        this.table = []
+        return
+      }
+      getFollowListByUser(this.user.username).then(res => {
+        this.table = res.data || []
+      })
     },
-    // 查看该作者发布的全部作品（就业信息）
     viewWorks(username) {
-      this.$router.push({ path: "/front/authorWorks", query: { username } });
+      this.$router.push({ path: '/front/authorWorks', query: { username } })
     },
     cancel(row) {
-      request.delete(`/lookAuthor/${row.user}/${row.commentUser}`).then(() => {
-        this.$message.success("已取消关注");
-        this.load();
-      });
+      unfollowAuthor(row.user, row.commentUser).then(() => {
+        this.$message.success('已取消关注')
+        this.load()
+      })
     }
   }
-};
+}
 </script>
 
 <style scoped>
@@ -326,28 +326,28 @@ export default {
 }
 
 /* ════════════════════════════════════════
-   关注卡片网格
+   关注卡片网格（优化布局）
 ════════════════════════════════════════ */
 .follow-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: var(--spacing-lg);
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--spacing-xl);
 }
 
 .follow-card {
   background: var(--bg-primary);
   border: 1px solid var(--border-lighter);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   transition: all var(--transition-cubic);
   text-align: center;
 }
 
 .follow-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-4px);
   box-shadow: var(--shadow-lg);
   border-color: var(--border-primary);
 }
@@ -355,7 +355,7 @@ export default {
 /* 顶部装饰条 */
 .card-top-bar {
   width: 100%;
-  height: 5px;
+  height: 4px;
   background: var(--primary-gradient);
   flex-shrink: 0;
 }
@@ -363,8 +363,7 @@ export default {
 /* 头像区 */
 .avatar-section {
   position: relative;
-  margin-top: var(--spacing-xl);
-  margin-bottom: var(--spacing-base);
+  padding: var(--spacing-xl) var(--spacing-lg) var(--spacing-sm);
 }
 
 .avatar-ring {
@@ -384,7 +383,7 @@ export default {
 
 .following-tag {
   position: absolute;
-  bottom: -4px;
+  bottom: 2px;
   left: 50%;
   transform: translateX(-50%);
   background: var(--success-color);
@@ -402,32 +401,16 @@ export default {
 
 /* 用户信息 */
 .user-info {
-  padding: var(--spacing-base) var(--spacing-md) 0;
+  padding: 0 var(--spacing-lg);
+  flex: 1;
 }
 
 .user-name {
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
   color: var(--text-primary);
-  margin: 0 0 4px;
-}
-
-.user-role {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  font-size: var(--font-size-xs);
-  color: var(--text-disabled);
   margin: 0;
-}
-
-/* 分割线 */
-.card-divider {
-  width: calc(100% - var(--spacing-2xl));
-  height: 1px;
-  background: var(--border-lighter);
-  margin: var(--spacing-lg) 0 0;
+  line-height: 1.3;
 }
 
 /* 操作按钮 */
@@ -435,7 +418,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
-  padding: var(--spacing-md) var(--spacing-lg) var(--spacing-lg);
+  padding: var(--spacing-lg);
   width: 100%;
   box-sizing: border-box;
 }

@@ -8,7 +8,7 @@
         </div>
         <div>
           <h2 class="page-header-title">评论管理</h2>
-          <p class="page-header-desc">查看并管理所有短评与长评内容</p>
+          <p class="page-header-desc">查看并管理所有评论内容</p>
         </div>
       </div>
       <span class="page-header-badge" v-if="total > 0">
@@ -32,7 +32,7 @@
 
     <div class="admin-table-wrap">
       <el-table v-loading="loading" :data="tableData" border stripe style="width: 100%">
-        <el-table-column prop="title"    label="标题（长评）" min-width="140" show-overflow-tooltip />
+        <el-table-column prop="title"    label="标题" min-width="140" show-overflow-tooltip />
         <el-table-column label="内容"   min-width="240">
           <template #default="scope">
             <span class="text-clamp">{{ scope.row.content }}</span>
@@ -69,44 +69,60 @@
 </template>
 
 <script>
-import request from "@/utils/request";
+import { getMessagePage, deleteMessage } from '@/api/message'
 import { ChatDotRound, Search } from '@element-plus/icons-vue'
 
 export default {
-  name: "Comment",
+  name: 'Comment',
   components: { ChatDotRound, Search },
   data() {
     return {
       loading: false,
-      search: "",
+      search: '',
       pageNum: 1,
       pageSize: 10,
       total: 0,
       tableData: []
-    };
+    }
   },
-  created() { this.load(); },
+  created() {
+    this.load()
+  },
   methods: {
     load() {
-      this.loading = true;
-      request.get("/message/page", {
-        params: { pageNum: this.pageNum, pageSize: this.pageSize, search: this.search }
-      }).then(res => {
-        this.loading = false;
-        this.tableData = res.data.records;
-        this.total = res.data.total;
-      }).catch(() => { this.loading = false; });
+      this.loading = true
+      getMessagePage({
+        pageNum: this.pageNum,
+        pageSize: this.pageSize,
+        search: this.search
+      })
+        .then(res => {
+          this.tableData = res.data.records || []
+          this.total = res.data.total || 0
+        })
+        .catch(() => {})
+        .finally(() => { this.loading = false })
     },
     handleDelete(id) {
-      request.delete(`/message/${id}`).then(res => {
-        if (res.code === '0') { this.$message.success('删除成功'); this.load(); }
-        else this.$message.error(res.msg);
-      });
+      deleteMessage(id).then(res => {
+        if (res.code === '0') {
+          this.$message.success('删除成功')
+          this.load()
+        } else {
+          this.$message.error(res.msg)
+        }
+      })
     },
-    handleSizeChange(ps) { this.pageSize = ps; this.load(); },
-    handleCurrentChange(pn) { this.pageNum = pn; this.load(); },
+    handleSizeChange(ps) {
+      this.pageSize = ps
+      this.load()
+    },
+    handleCurrentChange(pn) {
+      this.pageNum = pn
+      this.load()
+    },
   }
-};
+}
 </script>
 
 <style scoped>

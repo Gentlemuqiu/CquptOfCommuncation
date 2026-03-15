@@ -10,8 +10,8 @@ export default createStore({
     }
   },
   actions: {
-    SET_USER({commit}, user) {
-      this.state.user = user
+    setUser({ commit }, user) {
+      commit('SET_USER', user)
     }
   },
   getters: {

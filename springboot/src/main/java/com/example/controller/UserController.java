@@ -127,8 +127,8 @@ public class UserController {
             return Result.error("-1", "新密码长度不能少于 6 位");
         }
 
-        Integer userId = Integer.valueOf(idObj.toString());
-        User user = userMapper.selectById(userId);
+        Integer userid = Integer.valueOf(idObj.toString());
+        User user = userMapper.selectById(userid);
         if (user == null) {
             return Result.error("-1", "用户不存在");
         }

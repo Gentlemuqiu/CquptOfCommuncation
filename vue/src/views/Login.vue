@@ -77,48 +77,49 @@
 </template>
 
 <script>
-import request from "@/utils/request";
-import { User, Lock } from '@element-plus/icons-vue';
+import { login } from '@/api/user'
+import { clearUser, setUser } from '@/utils/auth'
+import { User, Lock } from '@element-plus/icons-vue'
 
 export default {
-  name: "Login",
+  name: 'Login',
   components: { User, Lock },
   data() {
     return {
-      form: { username: "", password: "" },
+      form: { username: '', password: '' },
       loading: false,
       rules: {
-        username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
-        password: [{ required: true, message: "请输入密码", trigger: "blur" }],
+        username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+        password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
       },
-    };
+    }
   },
   created() {
-    sessionStorage.removeItem("user");
+    clearUser()
   },
   methods: {
-    async login() {
-      this.$refs.form.validate(async (valid) => {
-        if (!valid) return;
-        this.loading = true;
+    login() {
+      this.$refs.form.validate(async valid => {
+        if (!valid) return
+        this.loading = true
         try {
-          const res = await request.post("/user/login", this.form);
-          if (res.code === "0") {
-            this.$message.success("登录成功");
-            sessionStorage.setItem("user", JSON.stringify(res.data));
-            this.$router.push(res.data.role !== 1 ? "/front/home" : "/");
+          const res = await login(this.form)
+          if (res.code === '0') {
+            this.$message.success('登录成功')
+            setUser(res.data)
+            this.$router.push(res.data.role !== 1 ? '/front/home' : '/')
           } else {
-            this.$message.error(res.msg);
+            this.$message.error(res.msg)
           }
         } catch {
-          this.$message.error("网络错误，请稍后再试");
+          this.$message.error('网络错误，请稍后再试')
         } finally {
-          this.loading = false;
+          this.loading = false
         }
-      });
+      })
     },
   },
-};
+}
 </script>
 
 <style scoped>

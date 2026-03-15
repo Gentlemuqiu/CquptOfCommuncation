@@ -97,7 +97,7 @@
 </template>
 
 <script>
-import request from "@/utils/request";
+import { register as registerUser } from '@/api/user'
 import { User, Phone, Lock } from '@element-plus/icons-vue';
 
 export default {
@@ -147,7 +147,7 @@ export default {
         if (!valid) return;
         this.loading = true;
         try {
-          const res = await request.post("/user/register", this.form);
+          const res = await registerUser(this.form);
           if (res.code === '0') {
             this.$message.success("注册成功，欢迎加入！");
             this.$router.push("/login");

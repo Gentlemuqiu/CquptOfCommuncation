@@ -75,11 +75,6 @@
               </el-image>
               <!-- 分类徽章 -->
               <div class="area-badge">{{ item.area }}</div>
-              <!-- 视频徽章 -->
-              <div class="video-badge" v-if="item.url">
-                <el-icon><VideoPlay /></el-icon>
-                视频
-              </div>
               <!-- 热门徽章 -->
               <div class="hot-badge" v-if="(item.zan || 0) >= 3">🔥 热门</div>
               <!-- 悬浮遮罩 -->
@@ -113,18 +108,20 @@
 </template>
 
 <script>
-import request from "@/utils/request";
+import { getUserPage } from '@/api/user'
+import { getMovieByUser } from '@/api/movie'
 import {
-  ArrowLeft, Document, House, Picture, VideoPlay,
+  ArrowLeft, Document, House, Picture,
   View, Calendar, Sunny
 } from '@element-plus/icons-vue'
 
 export default {
   name: "AuthorWorks",
-  components: { ArrowLeft, Document, House, Picture, VideoPlay, View, Calendar, Sunny },
+  components: { ArrowLeft, Document, House, Picture, View, Calendar, Sunny },
   data() {
     return {
-      username: '',
+      username: '',           // 用于页面标题展示（如「xxx 的作品」）
+      userId: null,           // 关注的人的 id / 作者的 id，传给接口 movie/user/{userid}
       works: [],
       loading: false
     };
@@ -134,21 +131,71 @@ export default {
       return this.username ? this.username[0].toUpperCase() : 'U';
     }
   },
+  watch: {
+    '$route.query': {
+      handler(q) {
+        this.username = q.username || '';
+        this.userId = q.userId != null ? Number(q.userId) : (q.user_id != null ? Number(q.user_id) : null);
+        if (this.userId != null) {
+          this.loadWorks();
+        } else if (this.username) {
+          this.fetchUserIdThenLoad();
+        } else {
+          this.works = [];
+        }
+      },
+      immediate: false
+    }
+  },
   created() {
-    this.username = this.$route.query.username || '';
-    if (this.username) {
+    const q = this.$route.query;
+    this.username = q.username || '';
+    this.userId = q.userId != null ? Number(q.userId) : (q.user_id != null ? Number(q.user_id) : null);
+    if (this.userId != null) {
       this.loadWorks();
+    } else if (this.username) {
+      this.fetchUserIdThenLoad();
     }
   },
   methods: {
-    loadWorks() {
-      this.loading = true;
-      request.get(`/movie/user/byUsername/${this.username}`)
+    /** 仅有 username 时先根据用户名查出「关注的人的 id」，再请求 movie/user/{userid} 拉作品 */
+    fetchUserIdThenLoad() {
+      this.loading = true
+      getUserPage({ username: this.username, pageNum: 1, pageSize: 1 })
         .then(res => {
-          this.works = res.data || [];
+          const list = (res.data && res.data.records) ? res.data.records : (Array.isArray(res.data) ? res.data : [])
+          const user = list[0]
+          if (user && user.id != null) {
+            this.userId = Number(user.id)
+            this.loadWorks()
+          } else {
+            this.works = []
+          }
         })
+        .catch(() => { this.works = [] })
+        .finally(() => { this.loading = false })
+    },
+    loadWorks() {
+      if (this.userId == null) return
+      this.loading = true
+      getMovieByUser(this.userId)
+        .then(res => {
+          if (res.code !== '0' && res.code !== 0) {
+            this.works = []
+            return
+          }
+          const d = res.data
+          if (Array.isArray(d)) {
+            this.works = d
+          } else if (d && Array.isArray(d.records)) {
+            this.works = d.records
+          } else {
+            this.works = []
+          }
+        })
+        .catch(() => { this.works = [] })
         .finally(() => {
-          this.loading = false;
+          this.loading = false
         });
     },
     goDetail(id) {
@@ -476,21 +523,6 @@ export default {
   font-weight: var(--font-weight-semibold);
   padding: 2px 8px;
   border-radius: var(--radius-full);
-}
-
-/* 视频徽章 */
-.video-badge {
-  position: absolute;
-  top: 8px; right: 8px;
-  background: rgba(0,0,0,0.6);
-  color: #fff;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
-  display: flex;
-  align-items: center;
-  gap: 3px;
 }
 
 /* 热门徽章 */

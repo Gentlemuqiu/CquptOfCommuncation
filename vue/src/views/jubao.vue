@@ -1,6 +1,5 @@
 <template>
   <div class="admin-page">
-    <!-- 页面标题 -->
     <div class="admin-page-header">
       <div class="page-header-left">
         <div class="page-header-icon red">
@@ -11,9 +10,7 @@
           <p class="page-header-desc">审核用户投诉，处理后将删除对应评论</p>
         </div>
       </div>
-      <span class="page-header-badge" v-if="total > 0">
-        待处理 {{ total }} 条
-      </span>
+      <span class="page-header-badge" v-if="total > 0">待处理 {{ total }} 条</span>
     </div>
 
     <div class="admin-toolbar">
@@ -25,9 +22,9 @@
 
     <div class="admin-table-wrap">
       <el-table v-loading="loading" :data="tableData" border stripe style="width: 100%">
-        <el-table-column prop="user"          label="投诉人"   width="120" />
-        <el-table-column prop="commentUser"   label="被投诉人" width="120" />
-        <el-table-column prop="content"       label="投诉内容" min-width="280" show-overflow-tooltip />
+        <el-table-column prop="user" label="投诉人" width="120" />
+        <el-table-column prop="commentUser" label="被投诉人" width="120" />
+        <el-table-column prop="content" label="投诉内容" min-width="280" show-overflow-tooltip />
         <el-table-column label="操作" width="160" align="center" fixed="right">
           <template #default="scope">
             <el-popconfirm
@@ -64,11 +61,12 @@
 </template>
 
 <script>
-import request from "@/utils/request";
+import { getJubaoPage, deleteJubao } from '@/api/jubao'
+import { deleteMessage } from '@/api/message'
 import { Warning, InfoFilled, Check } from '@element-plus/icons-vue'
 
 export default {
-  name: "Jubao",
+  name: 'Jubao',
   components: { Warning, InfoFilled, Check },
   data() {
     return {
@@ -77,38 +75,47 @@ export default {
       pageSize: 10,
       total: 0,
       tableData: [],
-    };
+    }
   },
-  created() { this.load(); },
+  created() {
+    this.load()
+  },
   methods: {
     load() {
-      this.loading = true;
-      request.get("/jubao/page", {
-        params: { pageNum: this.pageNum, pageSize: this.pageSize }
-      }).then(res => {
-        this.loading = false;
-        if (res.code === '0') {
-          this.tableData = res.data.records;
-          this.total = res.data.total;
-        }
-      }).catch(() => { this.loading = false; });
+      this.loading = true
+      getJubaoPage({ pageNum: this.pageNum, pageSize: this.pageSize })
+        .then(res => {
+          if (res.code === '0') {
+            this.tableData = res.data.records || []
+            this.total = res.data.total || 0
+          }
+        })
+        .catch(() => {})
+        .finally(() => { this.loading = false })
     },
     async handleDelete(row) {
-      this.loading = true;
+      this.loading = true
       try {
-        await request.delete(`/message/${row.commentId}`);
-        await request.delete(`/jubao/${row.id}`);
-        this.$message.success('投诉已处理，评论已删除');
-        this.load();
+        await deleteMessage(row.commentId)
+        await deleteJubao(row.id)
+        this.$message.success('投诉已处理，评论已删除')
+        this.load()
       } catch {
-        this.$message.error('操作失败，请稍后重试');
-        this.loading = false;
+        this.$message.error('操作失败，请稍后重试')
+      } finally {
+        this.loading = false
       }
     },
-    handleSizeChange(ps) { this.pageSize = ps; this.load(); },
-    handleCurrentChange(pn) { this.pageNum = pn; this.load(); },
-  }
-};
+    handleSizeChange(ps) {
+      this.pageSize = ps
+      this.load()
+    },
+    handleCurrentChange(pn) {
+      this.pageNum = pn
+      this.load()
+    },
+  },
+}
 </script>
 
 <style scoped></style>
