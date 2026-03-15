@@ -5,6 +5,18 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
+
+import com.aliyun.oss.ClientBuilderConfiguration;
+import com.aliyun.oss.OSS;
+import com.aliyun.oss.OSSClientBuilder;
+import com.aliyun.oss.common.auth.DefaultCredentialProvider;
+import com.aliyun.oss.common.comm.SignVersion;
+import com.aliyun.oss.internal.OSSHeaders;
+import com.aliyun.oss.model.CannedAccessControlList;
+import com.aliyun.oss.model.ObjectMetadata;
+import com.aliyun.oss.model.PutObjectRequest;
+import com.aliyun.oss.model.PutObjectResult;
+import com.aliyun.oss.model.StorageClass;
 import com.example.common.Result;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
@@ -12,10 +24,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/files")
@@ -42,19 +56,56 @@ public class FileController {
         if (file.isEmpty()) {
             return Result.error("-1","上传文件不能为空！");
         }
+        String accessKeyId = "LTAI5tNVxrUFb4j4xksbmuYs";
+        String accessKeySecret = "9Vh2Y1bmwHVI55TokcQIgPrqglXS4R";
 
-        // 文件名和路径安全处理
-        String originalFilename = file.getOriginalFilename();
-        String flag = IdUtil.fastSimpleUUID(); // 生成唯一标识
-        String safeFilename = originalFilename.replaceAll("[^a-zA-Z0-9\\.\\-_]", "_"); // 过滤非法字符
-        String filePath = Paths.get(uploadDir, flag + "_" + safeFilename).toString();
+        String region = "cn-chengdu";
+        String endpoint = "https://oss-cn-chengdu.aliyuncs.com";
 
-        // 写入文件
-        FileUtil.writeBytes(file.getBytes(), filePath);
+         // 创建凭证提供者
+        DefaultCredentialProvider provider = new DefaultCredentialProvider(accessKeyId, accessKeySecret);
 
-        // 返回文件访问 URL
-        String fileUrl = "http://" + ip + ":" + port + "/files/" + flag + "_" + safeFilename;
-        return Result.success(fileUrl);
+        // 配置客户端参数
+        ClientBuilderConfiguration clientBuilderConfiguration = new ClientBuilderConfiguration();
+        // 显式声明使用V4签名算法
+        clientBuilderConfiguration.setSignatureVersion(SignVersion.V4);
+
+        // 初始化OSS客户端
+        OSS ossClient = OSSClientBuilder.create()
+                .credentialsProvider(provider)
+                .clientConfiguration(clientBuilderConfiguration)
+                .region(region)
+                .endpoint(endpoint)
+                .build();
+
+        // 2. 生成唯一文件名（避免重复）
+        String fileName = UUID.randomUUID().toString();
+        if (StrUtil.isNotEmpty(file.getOriginalFilename()) && file.getOriginalFilename().contains(".")) {
+            String extension = StrUtil.subAfter(file.getOriginalFilename(), ".", true);
+            fileName += "." + extension;
+        }
+
+        // 3. 拼接OSS中的文件完整路径
+        String objectName = fileName;
+
+        // 4. 获取文件输入流
+        byte[] fileBytes = file.getBytes();
+        try (InputStream inputStream = new java.io.ByteArrayInputStream(fileBytes)) {
+            PutObjectRequest putObjectRequest = new PutObjectRequest("jxlxh", objectName, inputStream);
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setHeader(OSSHeaders.OSS_STORAGE_CLASS, StorageClass.Standard.toString());
+            metadata.setObjectAcl(CannedAccessControlList.PublicRead);
+            putObjectRequest.setMetadata(metadata);
+            PutObjectResult result = ossClient.putObject(putObjectRequest);
+            if (result.getResponse() != null) {
+                throw new RuntimeException("文件上传失败：" + result.getResponse().toString());
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("文件上传失败：" + e.getMessage(), e);
+        }
+
+
+        return Result.success("https://jxlxh.oss-cn-chengdu.aliyuncs.com/" + objectName);
     }
 
     /**

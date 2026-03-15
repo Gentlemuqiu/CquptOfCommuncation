@@ -35,6 +35,14 @@ public class CollectMovieController {
         return Result.success();
     }
 
+    @DeleteMapping("/{userid}/{id}")
+    public Result<?> delete(@PathVariable Integer userid, @PathVariable Integer id) {
+        collectMovieMapper.delete(new QueryWrapper<CollectMovie>()
+                .eq("movieid", id)
+                .eq("userid", userid));
+        return Result.success();
+    }
+
     @PutMapping
     public Result<?> update(@RequestBody CollectMovie collectMovie) {
         collectMovieMapper.updateById(collectMovie);
