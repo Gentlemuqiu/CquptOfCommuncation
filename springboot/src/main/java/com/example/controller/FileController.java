@@ -56,8 +56,8 @@ public class FileController {
         if (file.isEmpty()) {
             return Result.error("-1","上传文件不能为空！");
         }
-        String accessKeyId = "LTAI5tNVxrUFb4j4xksbmuYs";
-        String accessKeySecret = "9Vh2Y1bmwHVI55TokcQIgPrqglXS4R";
+        String accessKeyId = "xxx";
+        String accessKeySecret = "xxx";
 
         String region = "cn-chengdu";
         String endpoint = "https://oss-cn-chengdu.aliyuncs.com";
