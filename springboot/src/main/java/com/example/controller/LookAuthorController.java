@@ -13,7 +13,7 @@ import cn.hutool.core.util.StrUtil;
 
 import javax.annotation.Resource;
 import java.util.*;
-import java.math.BigDecimal;
+import java.util.Date;
 
 @RestController
 @RequestMapping("/lookAuthor")
@@ -24,8 +24,11 @@ public class LookAuthorController {
 
     @PostMapping
     public Result<?> save(@RequestBody LookAuthor lookAuthor) {
-        lookAuthorMapper.delete(Wrappers.<LookAuthor>lambdaQuery().eq(LookAuthor::getCommentUser, lookAuthor.getCommentUser())
+        // 先删除旧的关注记录（避免重复），再插入新记录
+        lookAuthorMapper.delete(Wrappers.<LookAuthor>lambdaQuery()
+                .eq(LookAuthor::getCommentUser, lookAuthor.getCommentUser())
                 .eq(LookAuthor::getUser, lookAuthor.getUser()));
+        lookAuthor.setCreateTime(new Date());
         lookAuthorMapper.insert(lookAuthor);
         return Result.success();
     }

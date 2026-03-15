@@ -2,7 +2,9 @@ package com.example.controller;
 
 import com.example.common.Result;
 import com.example.entity.Movie;
+import com.example.entity.User;
 import com.example.mapper.MovieMapper;
+import com.example.mapper.UserMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -19,6 +21,9 @@ public class MovieController {
 
     @Resource
     private MovieMapper movieMapper;
+
+    @Resource
+    private UserMapper userMapper;
 
     @PostMapping
     public Result<?> save(@RequestBody Movie movie) {
@@ -88,10 +93,27 @@ public class MovieController {
         return Result.success(page);
     }
 
-    @GetMapping("/user/{user_id}")
-    public Result<?> findMovieByUserId(@PathVariable String user_id) {
+    /**
+     * 按用户ID查询该用户发布的作品
+     */
+    @GetMapping("/user/{userId}")
+    public Result<?> findMovieByUserId(@PathVariable Long userId) {
         List<Movie> list = movieMapper.selectList(
-                Wrappers.<Movie>lambdaQuery().eq(Movie::getPostUserId, user_id));
+                Wrappers.<Movie>lambdaQuery().eq(Movie::getPostUserId, userId).orderByDesc(Movie::getId));
+        return Result.success(list);
+    }
+
+    /**
+     * 按用户名查询该用户发布的作品（供"关注的人的作品"页面使用）
+     */
+    @GetMapping("/user/byUsername/{username}")
+    public Result<?> findMovieByUsername(@PathVariable String username) {
+        User user = userMapper.selectOne(Wrappers.<User>lambdaQuery().eq(User::getUsername, username));
+        if (user == null) {
+            return Result.error("-1", "用户不存在");
+        }
+        List<Movie> list = movieMapper.selectList(
+                Wrappers.<Movie>lambdaQuery().eq(Movie::getPostUserId, user.getId()).orderByDesc(Movie::getId));
         return Result.success(list);
     }
 }

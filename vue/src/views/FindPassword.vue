@@ -1,293 +1,344 @@
 <template>
-  <div class="bg-container">
-    <div class="image-bg"></div>
-    <div class="main-container">
-      <div class="title">找回密码</div>
-      <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
-        <el-form-item label="账号" prop="username">
-          <el-input prefix-icon="el-icon-user" v-model="form.username" placeholder="请输入账号"></el-input>
-        </el-form-item>
-        <el-form-item label="手机号" prop="phone">
-          <el-input prefix-icon="el-icon-phone" v-model="form.phone" placeholder="请输入手机号"></el-input>
-        </el-form-item>
-        <el-form-item>
-          <el-button class="full-width-button primary" type="primary" @click="handleVerifyUser">验证账号</el-button>
-        </el-form-item>
-        <el-form-item class="link-buttons">
-          <el-button type="text" @click="$router.push('/login')">返回登录</el-button>
-        </el-form-item>
-      </el-form>
+  <div class="auth-page">
+    <!-- 背景装饰 -->
+    <div class="bg-decoration">
+      <div class="bg-orb bg-orb-1"></div>
+      <div class="bg-orb bg-orb-2"></div>
+      <div class="bg-orb bg-orb-3"></div>
+    </div>
+
+    <div class="auth-wrapper">
+      <div class="auth-card">
+        <!-- 顶部 Logo -->
+        <div class="auth-header">
+          <div class="logo-wrap">
+            <img src="../assets/image/cqupt.svg" alt="Logo" class="auth-logo">
+          </div>
+          <h1 class="auth-title">找回密码</h1>
+          <p class="auth-subtitle">验证账号信息，重置你的登录密码</p>
+        </div>
+
+        <!-- 步骤进度条 -->
+        <div class="steps-bar">
+          <div class="step" :class="{ active: step >= 1, done: step > 1 }">
+            <div class="step-dot">
+              <el-icon v-if="step > 1"><Check /></el-icon>
+              <span v-else>1</span>
+            </div>
+            <span class="step-label">验证身份</span>
+          </div>
+          <div class="step-line" :class="{ active: step > 1 }"></div>
+          <div class="step" :class="{ active: step >= 2 }">
+            <div class="step-dot">
+              <span>2</span>
+            </div>
+            <span class="step-label">重置密码</span>
+          </div>
+        </div>
+
+        <!-- Step 1: 验证身份 -->
+        <el-form
+          v-if="step === 1"
+          ref="verifyForm"
+          :model="verifyData"
+          :rules="verifyRules"
+          size="large"
+          class="auth-form"
+        >
+          <el-form-item prop="username">
+            <el-input
+              v-model="verifyData.username"
+              placeholder="请输入用户名"
+              class="auth-input"
+              clearable
+            >
+              <template #prefix><el-icon><User /></el-icon></template>
+            </el-input>
+          </el-form-item>
+
+          <el-form-item prop="phone">
+            <el-input
+              v-model="verifyData.phone"
+              placeholder="请输入注册时的手机号"
+              class="auth-input"
+              clearable
+              maxlength="11"
+            >
+              <template #prefix><el-icon><Phone /></el-icon></template>
+            </el-input>
+          </el-form-item>
+
+          <el-form-item>
+            <el-button
+              type="primary"
+              class="auth-submit-btn"
+              :loading="loading"
+              @click="handleVerify"
+            >
+              <span v-if="!loading">验证账号</span>
+              <span v-else>验证中...</span>
+            </el-button>
+          </el-form-item>
+        </el-form>
+
+        <!-- Step 2: 重置密码 -->
+        <el-form
+          v-else
+          ref="resetForm"
+          :model="resetData"
+          :rules="resetRules"
+          size="large"
+          class="auth-form"
+        >
+          <div class="verified-tip">
+            <el-icon class="tip-icon"><CircleCheckFilled /></el-icon>
+            身份验证通过，请设置新密码
+          </div>
+
+          <el-form-item prop="password">
+            <el-input
+              v-model="resetData.password"
+              placeholder="请输入新密码（至少 6 位）"
+              show-password
+              class="auth-input"
+            >
+              <template #prefix><el-icon><Lock /></el-icon></template>
+            </el-input>
+          </el-form-item>
+
+          <el-form-item prop="confirm">
+            <el-input
+              v-model="resetData.confirm"
+              placeholder="再次确认新密码"
+              show-password
+              class="auth-input"
+              @keyup.enter="handleReset"
+            >
+              <template #prefix><el-icon><Lock /></el-icon></template>
+            </el-input>
+          </el-form-item>
+
+          <el-form-item>
+            <el-button
+              type="primary"
+              class="auth-submit-btn"
+              :loading="loading"
+              @click="handleReset"
+            >
+              <span v-if="!loading">确认重置</span>
+              <span v-else>重置中...</span>
+            </el-button>
+          </el-form-item>
+        </el-form>
+
+        <div class="auth-footer">
+          <el-link type="primary" @click="$router.push('/login')" :underline="false" class="footer-link">
+            ← 返回登录
+          </el-link>
+          <span class="footer-divider">|</span>
+          <el-link type="primary" @click="$router.push('/register')" :underline="false" class="footer-link">
+            立即注册
+          </el-link>
+        </div>
+      </div>
     </div>
   </div>
-
-  <el-dialog 
-    title="修改密码" 
-    v-model="dialogVisible"
-    width="400px" 
-    @closed="handleDialogClose"
-    :close-on-click-modal="false"
-    :close-on-press-escape="false"
-  >
-    <el-form :model="newPasswordForm" :rules="newPasswordRules" ref="newPasswordFormRef" label-width="80px">
-      <el-form-item label="新密码" prop="password">
-        <el-input v-model="newPasswordForm.password" type="password" placeholder="请输入新密码"></el-input>
-      </el-form-item>
-      <el-form-item label="确认密码" prop="confirmPassword">
-        <el-input v-model="newPasswordForm.confirmPassword" type="password" placeholder="请确认新密码"></el-input>
-      </el-form-item>
-    </el-form>
-    <template #footer>
-      <el-button @click="dialogVisible = false">取消</el-button>
-      <el-button type="primary" @click="handleResetPassword">确定</el-button>
-    </template>
-  </el-dialog>
 </template>
 
 <script>
 import request from "@/utils/request";
-import { ElMessage } from 'element-plus';
+import { User, Phone, Lock, Check, CircleCheckFilled } from '@element-plus/icons-vue';
 
 export default {
-  name: "ResetPassword",
+  name: "FindPassword",
+  components: { User, Phone, Lock, Check, CircleCheckFilled },
   data() {
-    // 密码确认校验函数
-    const validateConfirmPassword = (rule, value, callback) => {
-      if (value === '') {
-        callback(new Error('请再次输入密码'));
-      } else if (value !== this.newPasswordForm.password) {
-        callback(new Error('两次输入密码不一致!'));
+    const validateConfirm = (rule, value, callback) => {
+      if (value !== this.resetData.password) {
+        callback(new Error('两次输入的密码不一致'));
       } else {
         callback();
       }
     };
-
     return {
-      // 表单数据
-      form: {
-        username: "",
-        phone: "",
-      },
-      // 弹窗控制
-      dialogVisible: false,
-      // 新密码表单
-      newPasswordForm: {
-        password: "",
-        confirmPassword: "",
-      },
-      // 表单校验规则
-      rules: {
-        username: [
-          { required: true, message: "请输入账号", trigger: "blur" },
-        ],
+      step: 1,
+      loading: false,
+      verifyData: { username: '', phone: '' },
+      resetData: { password: '', confirm: '' },
+      verifyRules: {
+        username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
         phone: [
-          { required: true, message: "请输入手机号", trigger: "blur" },
-          { pattern: /^1[3-9]\d{9}$/, message: "请输入有效的手机号", trigger: "blur" },
-        ],
+          { required: true, message: '请输入手机号', trigger: 'blur' },
+          { pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号', trigger: 'blur' }
+        ]
       },
-      // 新密码表单校验规则
-      newPasswordRules: {
+      resetRules: {
         password: [
-          { required: true, message: "请输入新密码", trigger: "blur" },
-          { min: 6, message: "密码长度不能小于6个字符", trigger: "blur" }
+          { required: true, message: '请输入新密码', trigger: 'blur' },
+          { min: 6, message: '密码长度不能少于 6 位', trigger: 'blur' }
         ],
-        confirmPassword: [
-          { required: true, message: "请确认新密码", trigger: "blur" },
-          { validator: validateConfirmPassword, trigger: ["blur", "change"] }
+        confirm: [
+          { required: true, message: '请确认新密码', trigger: 'blur' },
+          { validator: validateConfirm, trigger: 'blur' }
         ]
       }
     };
   },
   methods: {
-    // 处理验证用户
-    async handleVerifyUser() {
+    async handleVerify() {
+      const valid = await this.$refs.verifyForm.validate().catch(() => false);
+      if (!valid) return;
+      this.loading = true;
       try {
-        // 先验证表单
-        await this.$refs.formRef.validate();
-        
-        // 显示加载状态
-        const loading = this.$loading({
-          lock: true,
-          text: '验证中...',
-          spinner: 'el-icon-loading',
-          background: 'rgba(0, 0, 0, 0.7)'
-        });
-
-        try {
-          // 调用验证接口
-          const res = await request.post("/user/resetPassVerify", this.form);
-          
-          // 关闭加载状态
-          loading.close();
-
-          if (res.code === "0") {
-            // 验证成功，显示修改密码弹窗
-            this.dialogVisible = true;
-            // 重置新密码表单
-            this.newPasswordForm.password = "";
-            this.newPasswordForm.confirmPassword = "";
-            if (this.$refs.newPasswordFormRef) {
-              this.$refs.newPasswordFormRef.clearValidate();
-            }
-          } else {
-            ElMessage.error(res.msg || '验证失败');
-          }
-        } catch (error) {
-          loading.close();
-          console.error('验证请求失败:', error);
-          ElMessage.error('网络错误，请重试');
+        const res = await request.post('/user/resetPassVerify', this.verifyData);
+        if (res.code === '0') {
+          this.$message.success('身份验证通过');
+          this.step = 2;
+        } else {
+          this.$message.error(res.msg || '验证失败，请检查用户名和手机号');
         }
-      } catch (error) {
-        console.error('表单验证失败:', error);
+      } catch {
+        this.$message.error('网络错误，请稍后重试');
+      } finally {
+        this.loading = false;
       }
     },
 
-    // 处理重置密码
-    async handleResetPassword() {
+    async handleReset() {
+      const valid = await this.$refs.resetForm.validate().catch(() => false);
+      if (!valid) return;
+      this.loading = true;
       try {
-        // 验证新密码表单
-        await this.$refs.newPasswordFormRef.validate();
-        
-        // 显示加载状态
-        const loading = this.$loading({
-          lock: true,
-          text: '正在重置密码...',
-          spinner: 'el-icon-loading',
-          background: 'rgba(0, 0, 0, 0.7)'
+        const res = await request.post('/user/resetPass', {
+          username: this.verifyData.username,
+          phone: this.verifyData.phone,
+          password: this.resetData.password
         });
-
-        try {
-          // 调用重置密码接口
-          const data = {
-            username: this.form.username,
-            phone: this.form.phone,
-            password: this.newPasswordForm.password
-          };
-          
-          const res = await request.post("/user/resetPass", data);
-          
-          // 关闭加载状态
-          loading.close();
-
-          if (res.code === "0") {
-            ElMessage.success('密码重置成功！');
-            this.dialogVisible = false;
-            // 重置成功后跳转到登录页
-            this.$router.push('/login');
-          } else {
-            ElMessage.error(res.msg || '重置密码失败');
-          }
-        } catch (error) {
-          loading.close();
-          console.error('重置密码请求失败:', error);
-          ElMessage.error('网络错误，请重试');
+        if (res.code === '0') {
+          this.$message.success('密码重置成功，请重新登录');
+          this.$router.push('/login');
+        } else {
+          this.$message.error(res.msg || '重置失败');
         }
-      } catch (error) {
-        console.error('新密码表单验证失败:', error);
-      }
-    },
-
-    // 处理弹窗关闭
-    handleDialogClose() {
-      this.newPasswordForm.password = "";
-      this.newPasswordForm.confirmPassword = "";
-      if (this.$refs.newPasswordFormRef) {
-        this.$refs.newPasswordFormRef.clearValidate();
+      } catch {
+        this.$message.error('网络错误，请稍后重试');
+      } finally {
+        this.loading = false;
       }
     }
   }
 };
 </script>
+
 <style scoped>
-/* 样式保持不变 */
-.bg-container {
-  position: relative;
-  width: 100%;
-  height: 100vh;
+/* ── 背景装饰球 ── */
+.bg-orb-1 {
+  width: 480px; height: 480px;
+  background: radial-gradient(circle, var(--primary-lighter) 0%, transparent 70%);
+  top: -120px; left: -120px;
+  animation: float-orb 20s ease-in-out infinite;
+}
+.bg-orb-2 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, #3b82f6 0%, transparent 70%);
+  bottom: -100px; right: -100px;
+  animation: float-orb 26s ease-in-out infinite reverse;
+}
+.bg-orb-3 {
+  width: 280px; height: 280px;
+  background: radial-gradient(circle, #8b5cf6 0%, transparent 70%);
+  top: 50%; right: 15%;
+  animation: float-orb 18s ease-in-out infinite 4s;
+}
+
+/* ── 步骤进度条 ── */
+.steps-bar {
   display: flex;
-  justify-content: center;
   align-items: center;
-  overflow: hidden;
-  animation: fadeIn 2s ease;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: var(--spacing-xl);
 }
 
-.image-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: url('../assets/image/meihua.png');
-  background-size: cover;
-  background-position: center;
-  z-index: -1;
-  filter: brightness(0.6);
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+.step-dot {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  background: var(--bg-tertiary);
+  color: var(--text-disabled);
+  border: 2px solid var(--border-light);
+  transition: all var(--transition-base);
 }
 
-.main-container {
-  width: 400px;
-  padding: 30px 30px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 10px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-  animation: slideIn 1s ease;
+.step.active .step-dot {
+  background: var(--primary-gradient);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: var(--shadow-primary);
 }
 
-@keyframes slideIn {
-  from {
-    transform: translateY(50px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+.step.done .step-dot {
+  background: var(--success-color);
+  color: #fff;
+  border-color: transparent;
 }
 
-.title {
-  font-size: 24px;
-  font-weight: bold;
-  color: #ff69b4;
-  text-align: center;
-  margin-bottom: 20px;
+.step-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-disabled);
+  white-space: nowrap;
+  transition: color var(--transition-base);
 }
 
-.full-width-button {
-  width: 100%;
+.step.active .step-label,
+.step.done .step-label {
+  color: var(--primary-color);
+  font-weight: var(--font-weight-semibold);
 }
 
-.primary {
-  background-color: #ff69b4;
-  color: white;
-  border-color: #ff69b4;
+.step-line {
+  flex: 1;
+  height: 2px;
+  background: var(--border-light);
+  margin: 0 var(--spacing-sm);
+  margin-bottom: 22px;
+  min-width: 40px;
+  transition: background var(--transition-base);
 }
 
-.primary:hover {
-  background-color: #e856a7;
-  border-color: #e856a7;
+.step-line.active {
+  background: var(--primary-lighter);
 }
 
-.link-buttons {
-  text-align: center;
+/* ── 验证通过提示 ── */
+.verified-tip {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background: var(--success-light);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: var(--radius-base);
+  padding: var(--spacing-base) var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  font-size: var(--font-size-sm);
+  color: var(--success-color);
+  font-weight: var(--font-weight-medium);
 }
 
-.link-buttons .el-button {
-  color: #ff69b4;
-}
-
-.link-buttons .el-button:hover {
-  color: #e856a7;
-}
-
-.el-form-item {
-  margin-bottom: 20px;
+.tip-icon {
+  font-size: 18px;
+  flex-shrink: 0;
 }
 </style>

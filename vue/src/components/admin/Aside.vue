@@ -2,10 +2,8 @@
   <aside class="admin-aside">
     <!-- 侧边栏标题 -->
     <div class="aside-header">
-      <div class="aside-title">
-        <i class="el-icon-menu"></i>
-        <span>功能导航</span>
-      </div>
+      <el-icon class="aside-header-icon"><Menu /></el-icon>
+      <span>功能导航</span>
     </div>
 
     <!-- 导航菜单 -->
@@ -13,16 +11,15 @@
       <!-- 系统管理分组 -->
       <el-sub-menu index="system" v-if="systemItems.length">
         <template #title>
-          <i class="el-icon-setting"></i>
+          <el-icon><Setting /></el-icon>
           <span>系统管理</span>
         </template>
         <el-menu-item
           v-for="item in systemItems"
           :key="item.path"
           :index="item.path"
-          class="sub-menu-item"
         >
-          <i :class="item.icon"></i>
+          <el-icon><component :is="getIcon(item.icon)" /></el-icon>
           <span>{{ item.label }}</span>
         </el-menu-item>
       </el-sub-menu>
@@ -32,9 +29,8 @@
         v-for="item in normalItems"
         :key="item.path"
         :index="item.path"
-        class="menu-item"
       >
-        <i :class="item.icon"></i>
+        <el-icon><component :is="getIcon(item.icon)" /></el-icon>
         <span>{{ item.label }}</span>
       </el-menu-item>
     </el-menu>
@@ -44,9 +40,16 @@
 <script>
 import request from "@/utils/request";
 import { ADMIN_SIDEBAR_ITEMS } from "@/config/navigation";
+import {
+  Menu, Setting, UserFilled, Document,
+  Warning, ChatDotRound, Bell
+} from '@element-plus/icons-vue'
+
+const ICON_MAP = { UserFilled, Document, Warning, ChatDotRound, Bell }
 
 export default {
   name: "AdminAside",
+  components: { Menu, Setting, UserFilled, Document, Warning, ChatDotRound, Bell },
   data() {
     return {
       user: {},
@@ -70,13 +73,15 @@ export default {
   created() {
     const userStr = sessionStorage.getItem("user") || "{}";
     this.user = JSON.parse(userStr);
-
     if (this.user.id) {
       request.get("/user/" + this.user.id).then(res => {
-        if (res.code === '0') {
-          this.user = res.data;
-        }
+        if (res.code === '0') this.user = res.data;
       });
+    }
+  },
+  methods: {
+    getIcon(name) {
+      return ICON_MAP[name] || Document;
     }
   }
 };
@@ -100,9 +105,6 @@ export default {
 .aside-header {
   background: var(--primary-gradient);
   padding: var(--spacing-md) var(--spacing-lg);
-}
-
-.aside-title {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
@@ -112,9 +114,7 @@ export default {
   letter-spacing: 0.5px;
 }
 
-.aside-title i {
-  font-size: 16px;
-}
+.aside-header-icon { font-size: 16px; }
 
 /* ── 菜单 ── */
 .aside-menu {
@@ -122,7 +122,6 @@ export default {
   padding: var(--spacing-sm) 0;
 }
 
-/* 菜单项基础样式 */
 .aside-menu :deep(.el-menu-item),
 .aside-menu :deep(.el-sub-menu__title) {
   height: 46px;
@@ -135,26 +134,27 @@ export default {
   color: var(--text-secondary) !important;
 }
 
-.aside-menu :deep(.el-menu-item i),
-.aside-menu :deep(.el-sub-menu__title i) {
+.aside-menu :deep(.el-menu-item .el-icon),
+.aside-menu :deep(.el-sub-menu__title .el-icon) {
   margin-right: var(--spacing-sm);
-  font-size: 15px;
+  font-size: 16px;
   transition: transform var(--transition-cubic);
 }
 
-/* 悬停状态 */
+/* 悬停 */
 .aside-menu :deep(.el-menu-item:hover),
 .aside-menu :deep(.el-sub-menu__title:hover) {
   background: var(--bg-hover) !important;
   color: var(--primary-color) !important;
 }
 
-.aside-menu :deep(.el-menu-item:hover i),
-.aside-menu :deep(.el-sub-menu__title:hover i) {
-  transform: scale(1.1);
+.aside-menu :deep(.el-menu-item:hover .el-icon),
+.aside-menu :deep(.el-sub-menu__title:hover .el-icon) {
+  transform: scale(1.12);
+  color: var(--primary-color);
 }
 
-/* 激活状态 */
+/* 激活 */
 .aside-menu :deep(.el-menu-item.is-active) {
   background: var(--primary-gradient-soft) !important;
   color: var(--primary-color) !important;
@@ -162,7 +162,7 @@ export default {
   box-shadow: inset 3px 0 0 var(--primary-color);
 }
 
-.aside-menu :deep(.el-menu-item.is-active i) {
+.aside-menu :deep(.el-menu-item.is-active .el-icon) {
   color: var(--primary-color) !important;
 }
 

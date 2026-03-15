@@ -1,5 +1,21 @@
 <template>
   <div class="admin-page">
+    <!-- 页面标题 -->
+    <div class="admin-page-header">
+      <div class="page-header-left">
+        <div class="page-header-icon purple">
+          <el-icon><UserFilled /></el-icon>
+        </div>
+        <div>
+          <h2 class="page-header-title">用户管理</h2>
+          <p class="page-header-desc">管理注册用户，控制登录与评论权限</p>
+        </div>
+      </div>
+      <span class="page-header-badge" v-if="total > 0">
+        共 {{ total }} 位用户
+      </span>
+    </div>
+
     <!-- 工具栏 -->
     <div class="admin-toolbar">
       <el-input
@@ -10,7 +26,7 @@
         @keyup.enter="load"
       >
         <template #append>
-          <el-button icon="el-icon-search" @click="load" />
+          <el-button @click="load"><el-icon><Search /></el-icon></el-button>
         </template>
       </el-input>
     </div>
@@ -75,9 +91,11 @@
 
 <script>
 import request from "@/utils/request";
+import { UserFilled, Search } from '@element-plus/icons-vue'
 
 export default {
   name: "User",
+  components: { UserFilled, Search },
   data() {
     return {
       loading: false,

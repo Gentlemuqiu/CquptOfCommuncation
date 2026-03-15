@@ -1,8 +1,26 @@
 <template>
   <div class="admin-page">
+    <!-- 页面标题 -->
+    <div class="admin-page-header">
+      <div class="page-header-left">
+        <div class="page-header-icon">
+          <el-icon><Document /></el-icon>
+        </div>
+        <div>
+          <h2 class="page-header-title">信息管理</h2>
+          <p class="page-header-desc">管理全部就业信息，支持新增、编辑、删除</p>
+        </div>
+      </div>
+      <span class="page-header-badge" v-if="total > 0">
+        共 {{ total }} 条信息
+      </span>
+    </div>
+
     <!-- 工具栏 -->
     <div class="admin-toolbar">
-      <el-button type="primary" icon="el-icon-plus" @click="add">新增信息</el-button>
+      <el-button type="primary" @click="add">
+        <el-icon><Plus /></el-icon>新增信息
+      </el-button>
       <el-input
         v-model="search"
         placeholder="搜索标题/简介..."
@@ -11,7 +29,7 @@
         @keyup.enter="load"
       >
         <template #append>
-          <el-button icon="el-icon-search" @click="load" />
+          <el-button @click="load"><el-icon><Search /></el-icon></el-button>
         </template>
       </el-input>
     </div>
@@ -113,24 +131,28 @@
         </el-form-item>
         <el-form-item label="封面图片">
           <el-upload
-            action="http://localhost:8080/files/upload"
+            :action="uploadUrl"
             :on-success="fileSuccessUpload"
             :file-list="fileList"
             :limit="1"
             list-type="picture"
           >
-            <el-button type="default" icon="el-icon-upload2">上传图片</el-button>
+            <el-button type="default">
+              <el-icon><Upload /></el-icon>上传图片
+            </el-button>
           </el-upload>
         </el-form-item>
         <el-form-item label="视频">
           <el-upload
-            action="http://localhost:8080/files/upload"
+            :action="uploadUrl"
             :on-success="videoSuccessUpload"
             :file-list="videoList"
             :limit="1"
             accept="video/*"
           >
-            <el-button type="default" icon="el-icon-upload2">上传视频</el-button>
+            <el-button type="default">
+              <el-icon><Upload /></el-icon>上传视频
+            </el-button>
           </el-upload>
         </el-form-item>
       </el-form>
@@ -145,14 +167,18 @@
 <script>
 import request from "@/utils/request";
 import { INFO_AREAS } from "@/config/navigation";
+import { Document, Plus, Search, Upload } from '@element-plus/icons-vue'
 
 const URL = "/movie";
+const UPLOAD_URL = (process.env.VUE_APP_BASEURL || '/api') + '/files/upload';
 
 export default {
   name: "Sayings",
+  components: { Document, Plus, Search, Upload },
   data() {
     return {
       AREAS: INFO_AREAS.map(a => a.key),
+      uploadUrl: UPLOAD_URL,
       loading: false,
       entity: {},
       dialogVisible: false,

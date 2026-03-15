@@ -3,6 +3,7 @@ package com.example.entity;
 import lombok.Data;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
 import com.baomidou.mybatisplus.annotation.TableId;
 
@@ -45,7 +46,17 @@ public class CollectMovie extends Model<CollectMovie> {
       * 链接 
       */
     private String link;
-    private Integer userid;
-    private Integer movieid;
+
+    /**
+      * 用户ID（映射数据库列 userid）
+      */
+    @TableField("userid")
+    private Integer userId;
+
+    /**
+      * 信息ID（映射数据库列 movieid）
+      */
+    @TableField("movieid")
+    private Integer movieId;
 
 }

@@ -1,5 +1,21 @@
 <template>
   <div class="admin-page">
+    <!-- 页面标题 -->
+    <div class="admin-page-header">
+      <div class="page-header-left">
+        <div class="page-header-icon blue">
+          <el-icon><ChatDotRound /></el-icon>
+        </div>
+        <div>
+          <h2 class="page-header-title">评论管理</h2>
+          <p class="page-header-desc">查看并管理所有短评与长评内容</p>
+        </div>
+      </div>
+      <span class="page-header-badge" v-if="total > 0">
+        共 {{ total }} 条评论
+      </span>
+    </div>
+
     <div class="admin-toolbar">
       <el-input
         v-model="search"
@@ -9,7 +25,7 @@
         @keyup.enter="load"
       >
         <template #append>
-          <el-button icon="el-icon-search" @click="load" />
+          <el-button @click="load"><el-icon><Search /></el-icon></el-button>
         </template>
       </el-input>
     </div>
@@ -54,9 +70,11 @@
 
 <script>
 import request from "@/utils/request";
+import { ChatDotRound, Search } from '@element-plus/icons-vue'
 
 export default {
   name: "Comment",
+  components: { ChatDotRound, Search },
   data() {
     return {
       loading: false,

@@ -1,314 +1,257 @@
 <template>
-  <div class="detail-container">
-    <el-row :gutter="20">
-      <el-col :span="6">
-        <el-card class="image-card" shadow="hover">
-          <el-image 
-            :src="info.img"
-            @click="showVideo" 
-            class="detail-image"
-            fit="cover"
-          />
-          <div class="play-overlay" @click="showVideo" v-if="info.url">
-            <i class="el-icon-video-play"></i>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="18">
-        <el-card class="info-card" shadow="hover">
-          <div class="detail-header">
-            <h1 class="detail-title">{{ info.name }}</h1>
-            <div class="detail-meta">
-              <span class="meta-item">
-                <i class="el-icon-time"></i>
-                发布时间：{{ info.date }}
-              </span>
-              <span class="meta-item">
-                <i class="el-icon-collection-tag"></i>
-                类型：<span class="tag-text">{{ info.area }}</span>
-              </span>
-            </div>
-          </div>
-          
-          <div class="detail-content">
-            <div class="description-section">
-              <h3 class="section-title">简介</h3>
-              <p class="description-text">{{ info.description }}</p>
-            </div>
-            
-            <div class="action-buttons">
-              <el-button 
-                type="primary" 
-                icon="el-icon-star-off"
-                @click="collectMovie"
-                class="action-btn"
-              >
-                收藏
-              </el-button>
-              <el-button 
-                type="success" 
-                icon="el-icon-thumb"
-                @click="zan"
-                class="action-btn"
-              >
-                赞 {{ info.zan || 0 }}
-              </el-button>
-              <el-button 
-                type="info" 
-                icon="el-icon-remove-outline"
-                @click="cai"
-                class="action-btn"
-              >
-                踩 {{ info.cai || 0 }}
-              </el-button>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-dialog 
-      :title="info.name || '视频播放'" 
-        v-model="videoDialogVisible" 
-        width="70%"
-        :before-close="handleCloseVideo"
-      >
-        <video 
-          v-if="info.url" 
-          :src="info.url" 
-          controls 
-          autoplay
-          style="width: 100%"
-        >
-          您的浏览器不支持视频播放
-        </video>
-        <span v-else>暂无视频资源</span>
-      </el-dialog>
-    </el-row>
+  <div class="detail-page">
 
-    <div class="comments-section">
-      <!-- 长评区域 -->
-      <el-card class="comment-card" shadow="hover">
-        <div class="comment-header">
-          <h2 class="section-title-large">
-            <i class="el-icon-edit-outline"></i>
-            精彩长评
-          </h2>
-          <el-button 
-            type="primary" 
-            icon="el-icon-edit"
-            @click="$router.push({path: '/front/longComment', query: {id: info.id}})"
-            class="publish-btn"
-          >
-            发表长评
-          </el-button>
+    <!-- ════════════ 帖子主信息区 ════════════ -->
+    <div class="post-main-card">
+      <!-- 封面图 -->
+      <div class="post-cover" @click="showVideo">
+        <el-image :src="info.img" fit="cover" class="cover-img">
+          <template #error>
+            <div class="cover-fallback">
+              <el-icon><Picture /></el-icon>
+            </div>
+          </template>
+        </el-image>
+        <!-- 视频播放按钮 -->
+        <div class="play-btn" v-if="info.url">
+          <el-icon><VideoPlay /></el-icon>
         </div>
-        
-        <div class="long-comments-list">
-          <div 
-            class="long-comment-item" 
-            v-for="item in longMessages" 
+        <!-- 封面遮罩 -->
+        <div class="cover-overlay" v-if="info.url">
+          <span>点击播放视频</span>
+        </div>
+      </div>
+
+      <!-- 信息区 -->
+      <div class="post-info">
+        <!-- 分类徽章 -->
+        <div class="info-badges">
+          <span class="area-badge">
+            <el-icon><Collection /></el-icon>
+            {{ info.area }}
+          </span>
+          <span class="date-badge">
+            <el-icon><Calendar /></el-icon>
+            {{ info.date }}
+          </span>
+        </div>
+
+        <!-- 标题 -->
+        <h1 class="post-title">{{ info.name }}</h1>
+
+        <!-- 简介 -->
+        <div class="desc-wrap">
+          <div class="desc-label">
+            <span class="label-line"></span>
+            简介
+          </div>
+          <p class="desc-text">{{ info.description }}</p>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="action-bar">
+          <button
+            class="action-btn collect-btn"
+            :class="{ active: collectFlag }"
+            @click="collectMovie"
+            title="收藏"
+          >
+            <el-icon><Star /></el-icon>
+            <span>收藏</span>
+          </button>
+
+          <button
+            class="action-btn zan-btn"
+            :class="{ active: zanFlag }"
+            @click="zan"
+          >
+            <el-icon><Sunny /></el-icon>
+            <span>赞 {{ info.zan || 0 }}</span>
+          </button>
+
+          <button
+            class="action-btn cai-btn"
+            :class="{ active: caiFlag }"
+            @click="cai"
+          >
+            <el-icon><SemiSelect /></el-icon>
+            <span>踩 {{ info.cai || 0 }}</span>
+          </button>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════ 评论区 ════════════ -->
+    <div class="comments-wrap">
+
+      <!-- ─── 短评 ─── -->
+      <div class="comment-section">
+        <div class="section-hd">
+          <div class="section-hd-left">
+            <div class="hd-icon-wrap blue">
+              <el-icon><ChatDotRound /></el-icon>
+            </div>
+            <div>
+              <h2 class="section-hd-title">精彩短评</h2>
+              <p class="section-hd-sub">{{ messages.length }} 条评论</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 短评输入 -->
+        <div class="input-area">
+          <el-avatar :size="40" class="input-avatar" :src="user.avatar">
+            {{ user.username ? user.username[0].toUpperCase() : 'U' }}
+          </el-avatar>
+          <div class="input-box">
+            <el-input
+              type="textarea"
+              :rows="3"
+              v-model="entity.content"
+              placeholder="写下你的想法，和大家一起交流..."
+              class="comment-input"
+              resize="none"
+            />
+            <div class="input-footer">
+              <span class="input-hint">{{ (entity.content || '').length }} / 500</span>
+              <el-button type="primary" class="send-btn" @click="save">
+                <el-icon><Promotion /></el-icon>
+                发表
+              </el-button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 短评列表 -->
+        <div class="short-list" v-if="messages.length > 0">
+          <div
+            class="short-item"
+            v-for="item in messages"
             :key="item.id"
           >
-            <div class="comment-main">
-              <h3 
-                class="long-comment-title" 
-                @click="showLongComment(item.content)"
-              >
-                {{ item.title }}
-              </h3>
-              <div class="comment-meta">
-                <span class="comment-author">
-                  <i class="el-icon-user"></i>
-                  {{ item.username }}
-                </span>
-                <span class="comment-time">
-                  <i class="el-icon-time"></i>
-                  {{ item.time }}
-                </span>
-              </div>
-            </div>
-            <div class="comment-actions">
-              <el-button 
-                type="text" 
-                icon="el-icon-user"
-                @click="look(item.username)"
-                class="action-link"
-              >
-                关注
-              </el-button>
-              <el-button 
-                type="text" 
-                icon="el-icon-warning-outline"
-                @click="jubao(item)"
-                class="action-link danger"
-              >
-                投诉
-              </el-button>
-              <el-button 
-                type="text" 
-                icon="el-icon-delete"
-                @click="del(item.id)"
-                v-if="item.username === user.username"
-                class="action-link danger"
-              >
-                删除
-              </el-button>
-            </div>
-          </div>
-          <div v-if="longMessages.length === 0" class="empty-comments">
-            暂无长评，快来发表第一条吧！
-          </div>
-        </div>
-      </el-card>
+            <el-avatar :size="42" class="short-avatar" :src="item.avatar">
+              {{ item.username ? item.username[0].toUpperCase() : 'U' }}
+            </el-avatar>
 
-      <!-- 短评区域 -->
-      <el-card class="comment-card" shadow="hover">
-        <h2 class="section-title-large">
-          <i class="el-icon-chat-line-round"></i>
-          精彩短评
-        </h2>
-        
-        <div class="comment-input-section">
-          <el-input 
-            type="textarea" 
-            :rows="4" 
-            v-model="entity.content"
-            placeholder="写下你的想法..."
-            class="comment-textarea"
-          />
-          <div class="comment-submit">
-            <el-button 
-              type="primary" 
-              icon="el-icon-s-promotion"
-              @click="save"
-              class="submit-btn"
-            >
-              发表短评
-            </el-button>
-          </div>
-        </div>
-
-        <div class="short-comments-list">
-          <div 
-            class="short-comment-item" 
-            v-for="item in messages" 
-            :key="item.id"
-          >
-            <div class="comment-avatar">
-              <el-avatar :src="item.avatar" :size="50">
-                {{ item.username ? item.username[0].toUpperCase() : 'U' }}
-              </el-avatar>
-            </div>
-            <div class="comment-content">
-              <div class="comment-header-info">
-                <span class="comment-author-name">{{ item.username }}</span>
-                <span class="comment-time-text">{{ item.time }}</span>
+            <div class="short-body">
+              <div class="short-hd">
+                <span class="short-name">{{ item.username }}</span>
+                <span class="short-time">{{ item.time }}</span>
               </div>
-              <div class="comment-text">{{ item.content }}</div>
-              
-              <!-- 回复内容 -->
-              <div class="reply-content" v-if="item.parentMessage">
-                <div class="reply-header">
-                  <i class="el-icon-chat-line-round"></i>
+              <p class="short-text">{{ item.content }}</p>
+
+              <!-- 回复引用 -->
+              <div class="reply-quote" v-if="item.parentMessage">
+                <div class="quote-label">
+                  <el-icon><ChatLineRound /></el-icon>
                   回复 {{ item.parentMessage.username }}：
                 </div>
-                <div class="reply-text">{{ item.parentMessage.content }}</div>
+                <p class="quote-text">{{ item.parentMessage.content }}</p>
               </div>
-              
-              <div class="comment-footer">
-                <el-button 
-                  type="text" 
-                  size="small"
-                  icon="el-icon-chat-line-round"
-                  @click="reReply(item.id)"
-                  class="reply-btn"
-                >
-                  回复
-                </el-button>
-                <el-button 
-                  type="text" 
-                  size="small"
-                  icon="el-icon-warning-outline"
-                  @click="jubao(item)"
-                  class="report-btn"
-                >
-                  投诉
-                </el-button>
-                <el-button 
-                  type="text" 
-                  size="small"
-                  icon="el-icon-delete"
+
+              <div class="short-ft">
+                <button class="text-action reply" @click="reReply(item.id)">
+                  <el-icon><ChatLineRound /></el-icon> 回复
+                </button>
+                <button class="text-action warn" @click="jubao(item)">
+                  <el-icon><Warning /></el-icon> 投诉
+                </button>
+                <button
+                  class="text-action danger"
                   @click="del(item.id)"
                   v-if="item.username === user.username"
-                  class="delete-btn"
                 >
-                  删除
-                </el-button>
+                  <el-icon><Delete /></el-icon> 删除
+                </button>
               </div>
             </div>
           </div>
-          <div v-if="messages.length === 0" class="empty-comments">
-            暂无短评，快来发表第一条吧！
-          </div>
         </div>
-      </el-card>
 
-      <el-dialog title="回复信息" v-model="dialogFormVisible" width="30%">
-        <el-form :model="entity" label-width="80px">
-          <el-form-item label="内容">
-            <el-input v-model="entity.reply" autocomplete="off" type="textarea" :rows="3"></el-input>
-          </el-form-item>
-        </el-form>
-        <template #footer>
-          <el-button @click="cancel">取 消</el-button>
-          <el-button type="primary" @click="reply">确 定</el-button>
-        </template>
-      </el-dialog>
-
-      <el-dialog title="长评" v-model="vis" width="40%">
-        <el-card>
-          <v-md-preview :text="longComment"></v-md-preview>
-        </el-card>
-      </el-dialog>
+        <div v-else class="empty-block">
+          <el-icon class="empty-ico"><ChatDotRound /></el-icon>
+          <p>暂无评论，快来发表第一条短评吧</p>
+        </div>
+      </div>
     </div>
+
+    <!-- 视频弹窗 -->
+    <el-dialog
+      :title="info.name || '视频播放'"
+      v-model="videoDialogVisible"
+      width="70%"
+      :before-close="handleCloseVideo"
+      class="video-dialog"
+    >
+      <video
+        v-if="info.url"
+        :src="info.url"
+        controls
+        autoplay
+        class="video-player"
+      >
+        您的浏览器不支持视频播放
+      </video>
+      <div v-else class="no-video">暂无视频资源</div>
+    </el-dialog>
+
+    <!-- 回复弹窗 -->
+    <el-dialog title="回复评论" v-model="dialogFormVisible" width="420px" class="reply-dialog">
+      <el-input
+        v-model="entity.reply"
+        type="textarea"
+        :rows="4"
+        placeholder="写下你的回复..."
+        class="reply-input"
+      />
+      <template #footer>
+        <el-button @click="cancel">取消</el-button>
+        <el-button type="primary" @click="reply">确认回复</el-button>
+      </template>
+    </el-dialog>
+
   </div>
 </template>
 
-<script>import request from "@/utils/request";
+<script>
+import request from "@/utils/request";
+import {
+  Picture, VideoPlay, Collection, Calendar, Star, Sunny,
+  SemiSelect, EditPen, Warning, Delete, ChatDotRound, ChatLineRound,
+  Promotion
+} from '@element-plus/icons-vue'
 
 export default {
   name: "Detail",
+  components: {
+    Picture, VideoPlay, Collection, Calendar, Star, Sunny,
+    SemiSelect, EditPen, Warning, Delete, ChatDotRound, ChatLineRound,
+    Promotion
+  },
   data() {
     return {
       videoDialogVisible: false,
-      complaintText: '',
       info: {},
-      dialogVisible: false,
       messages: [],
-      longMessages: [],
       dialogFormVisible: false,
       entity: {},
-      longComment: '',
-      vis: false,
       user: {},
       zanFlag: false,
       caiFlag: false,
+      collectFlag: false,
     }
   },
   created() {
     this.user = sessionStorage.getItem("user") ? JSON.parse(sessionStorage.getItem("user")) : {}
     this.load()
-
     let id = location.search.split("=")[1]
     this.loadMessage(id);
   },
   methods: {
-    // 添加统一的登录检查方法
     checkLogin() {
       if (!this.user.id || !this.user.username) {
-        this.$message({
-          message: "请先登录",
-          type: "warning"
-        });
+        this.$message({ message: "请先登录", type: "warning" });
         return false;
       }
       return true;
@@ -318,37 +261,29 @@ export default {
       if (this.info.url) {
         this.videoDialogVisible = true;
       } else {
-        this.$message({
-          message: "暂无视频资源",
-          type: "warning"
-        });
+        this.$message({ message: "暂无视频资源", type: "warning" });
       }
     },
-    
+
     handleCloseVideo(done) {
       const videoElement = document.querySelector('video');
-      if (videoElement) {
-        videoElement.pause();
-      }
+      if (videoElement) videoElement.pause();
       done();
     },
 
     collectMovie() {
       if (!this.checkLogin()) return;
-      
-      request.post("/collectMovie/", { 
-        name: this.info.name, 
+      request.post("/collectMovie/", {
+        name: this.info.name,
         img: this.info.img,
-        link: '/front/detail?id=' + this.info.id, 
-        userid: this.user.id, 
-        movieid: this.info.id 
+        link: '/front/detail?id=' + this.info.id,
+        userId: this.user.id,
+        movieId: this.info.id
       }).then(res => {
-        if(res.code === '0') {
-          this.$message({
-            message: "收藏成功",
-            type: "success"
-          });
-        } else{
+        if (res.code === '0') {
+          this.$message({ message: "收藏成功", type: "success" });
+          this.collectFlag = true;
+        } else {
           this.$message.error(res.msg)
         }
       })
@@ -357,22 +292,13 @@ export default {
     load() {
       let id = location.search.split("=")[1]
       request.get("/movie/" + id).then(res => {
-        if(res.code === '0') {
-          this.info = res.data
-        }
+        if (res.code === '0') this.info = res.data
       })
     },
 
     zan() {
       if (!this.checkLogin()) return;
-      
-      if (this.zanFlag) {
-        this.$message({
-          message: "请勿重复点赞",
-          type: "warning"
-        });
-        return
-      }
+      if (this.zanFlag) { this.$message({ message: "请勿重复点赞", type: "warning" }); return }
       this.info.zan += 1
       this.entity = JSON.parse(JSON.stringify(this.info))
       this.zanFlag = true
@@ -381,14 +307,7 @@ export default {
 
     cai() {
       if (!this.checkLogin()) return;
-      
-      if (this.caiFlag) {
-        this.$message({
-          message: "请勿重复踩",
-          type: "warning"
-        });
-        return
-      }
+      if (this.caiFlag) { this.$message({ message: "请勿重复踩", type: "warning" }); return }
       this.info.cai += 1
       this.entity = JSON.parse(JSON.stringify(this.info))
       this.caiFlag = true
@@ -397,80 +316,29 @@ export default {
 
     putInfo() {
       if (!this.checkLogin()) return;
-
       request.put("/movie", this.entity).then(res => {
         if (res.code === '0') {
-          this.$message({
-            message: "操作成功",
-            type: "success"
-          });
+          this.$message({ message: "操作成功", type: "success" });
         } else {
-          this.$message({
-            message: res.msg,
-            type: "error"
-          });
+          this.$message({ message: res.msg, type: "error" });
         }
         this.entity = {}
         this.loadMessage(this.info.id);
       })
     },
 
-    look(username) {
-      if (!this.checkLogin()) return;
-      
-      if (username === this.user.username) {
-        this.$message({
-          message: "自己不能关注自己",
-          type: "error"
-        });
-        return
-      }
-      request.post("/lookAuthor/", {commentUser: username, user: this.user.username}).then(res => {
-        if(res.code === '0') {
-          this.$message({
-            message: "关注成功",
-            type: "success"
-          });
-        }
-      })
-    },
-
     jubao(info) {
       if (!this.checkLogin()) return;
-      
       request.post('/jubao', {
-        commentId: info.id,
-        commentUser: info.username,
-        content: info.content,
-        user: this.user.username
+        commentId: info.id, commentUser: info.username,
+        content: info.content, user: this.user.username
       }).then(res => {
-        if (res.code === '0') {
-          this.$message({
-            message: "投诉成功",
-            type: "success"
-          });
-        } else {
-          this.$message({
-            message: "感谢你为社区做出贡献！",
-            type: "success"
-          });
-        }
+        this.$message({ message: res.code === '0' ? "投诉成功" : "感谢你为社区做出贡献！", type: "success" });
       })
-    },
-
-    showLongComment(content) {
-      this.longComment = content
-      this.vis = true
     },
 
     loadMessage(id) {
-      request.get("/message/foreign/" + id + "/1").then(res => {
-        this.messages = res.data;
-      })
-
-      request.get("/message/foreign/" + id + "/2").then(res => {
-        this.longMessages = res.data;
-      })
+      request.get("/message/foreign/" + id + "/1").then(res => { this.messages = res.data; })
     },
 
     cancel() {
@@ -480,44 +348,27 @@ export default {
 
     reReply(id) {
       if (!this.checkLogin()) return;
-      
       this.dialogFormVisible = true;
       this.entity.parentId = id;
     },
 
     reply() {
       if (!this.checkLogin()) return;
-      
       this.entity.content = this.entity.reply;
       this.save();
     },
 
     save() {
       if (!this.checkLogin()) return;
-
-      if (!this.entity.content) {
-        this.$message({
-          message: "请填写内容",
-          type: "warning"
-        });
-        return;
-      }
-      
+      if (!this.entity.content) { this.$message({ message: "请填写内容", type: "warning" }); return; }
       this.entity.username = this.user.username
       this.entity.type = 1
       this.entity.foreignId = this.info.id
-
       request.post("/message", this.entity).then(res => {
         if (res.code === '0') {
-          this.$message({
-            message: "评论成功",
-            type: "success"
-          });
+          this.$message({ message: "评论成功", type: "success" });
         } else {
-          this.$message({
-            message: res.msg,
-            type: "error"
-          });
+          this.$message({ message: res.msg, type: "error" });
         }
         this.entity = {}
         this.loadMessage(this.info.id);
@@ -527,12 +378,8 @@ export default {
 
     del(id) {
       if (!this.checkLogin()) return;
-      
-      request.delete("/message/" + id).then(res => {
-        this.$message({
-          message: "删除成功",
-          type: "success"
-        });
+      request.delete("/message/" + id).then(() => {
+        this.$message({ message: "删除成功", type: "success" });
         this.loadMessage(this.info.id)
       })
     }
@@ -541,408 +388,651 @@ export default {
 </script>
 
 <style scoped>
-.detail-container {
-  padding: var(--spacing-lg) 0;
+/* ════════════════════════════════════════
+   页面容器
+════════════════════════════════════════ */
+.detail-page {
+  padding-bottom: var(--spacing-2xl);
 }
 
-/* ── 图片卡片 ── */
-.image-card {
+/* ════════════════════════════════════════
+   帖子主信息卡片
+════════════════════════════════════════ */
+.post-main-card {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 0;
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-lighter);
+  margin-bottom: var(--spacing-xl);
+  min-height: 340px;
+}
+
+/* 封面图 */
+.post-cover {
   position: relative;
   overflow: hidden;
-  border-radius: var(--radius-md);
-}
-
-.detail-image {
-  width: 100%;
-  height: 380px;
   cursor: pointer;
-  transition: transform var(--transition-slow);
-  border-radius: var(--radius-base);
-  display: block;
+  background: var(--bg-tertiary);
 }
 
-.detail-image:hover {
+.cover-img {
+  width: 100%;
+  height: 100%;
+  min-height: 340px;
+  display: block;
+  transition: transform var(--transition-slow);
+}
+
+.post-cover:hover .cover-img {
   transform: scale(1.04);
 }
 
-.play-overlay {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 72px;
-  height: 72px;
-  background: var(--primary-gradient);
-  border-radius: 50%;
+.cover-fallback {
+  width: 100%;
+  height: 100%;
+  min-height: 340px;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: all var(--transition-cubic);
-  z-index: 10;
-  box-shadow: var(--shadow-primary);
+  background: var(--bg-tertiary);
+  color: var(--text-disabled);
+  font-size: 48px;
 }
 
-.play-overlay:hover {
+.play-btn {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 68px; height: 68px;
+  border-radius: 50%;
+  background: var(--primary-gradient);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff;
+  font-size: 30px;
+  box-shadow: var(--shadow-primary);
+  transition: all var(--transition-cubic);
+  z-index: 2;
+}
+
+.post-cover:hover .play-btn {
   transform: translate(-50%, -50%) scale(1.12);
   box-shadow: var(--shadow-primary-lg);
 }
 
-.play-overlay i {
-  font-size: 32px;
-  color: #fff;
-  margin-left: 3px;
-}
-
-/* ── 信息卡片 ── */
-.info-card {
-  border-radius: var(--radius-md);
-  height: 100%;
-}
-
-.detail-header {
-  margin-bottom: var(--spacing-lg);
-  padding-bottom: var(--spacing-md);
-  border-bottom: 2px solid var(--border-lighter);
-}
-
-.detail-title {
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--text-primary);
-  margin: 0 0 var(--spacing-md) 0;
-  line-height: var(--line-height-snug);
-}
-
-.detail-meta {
+.cover-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 50%);
   display: flex;
+  align-items: flex-end;
+  padding: var(--spacing-lg);
+  color: rgba(255,255,255,0.85);
+  font-size: var(--font-size-sm);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+
+.post-cover:hover .cover-overlay { opacity: 1; }
+
+/* 信息区 */
+.post-info {
+  padding: var(--spacing-2xl);
+  display: flex;
+  flex-direction: column;
   gap: var(--spacing-lg);
-  flex-wrap: wrap;
 }
 
-.meta-item {
-  font-size: var(--font-size-sm);
-  color: var(--text-tertiary);
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.meta-item i {
-  color: var(--primary-color);
-  font-size: 14px;
-}
-
-.tag-text {
-  color: var(--primary-color);
-  font-weight: var(--font-weight-semibold);
-  background: var(--primary-gradient-soft);
-  padding: 2px var(--spacing-sm);
-  border-radius: var(--radius-full);
-  font-size: var(--font-size-sm);
-}
-
-.detail-content {
-  padding-top: var(--spacing-lg);
-}
-
-.description-section {
-  margin-bottom: var(--spacing-lg);
-}
-
-.section-title {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--text-primary);
-  margin-bottom: var(--spacing-base);
+.info-badges {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  flex-wrap: wrap;
 }
 
-.section-title::before {
-  content: '';
-  display: inline-block;
-  width: 3px;
-  height: 16px;
-  background: var(--primary-gradient);
+.area-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  background: var(--primary-gradient-soft);
+  border: 1px solid var(--border-primary);
   border-radius: var(--radius-full);
+  color: var(--primary-dark);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
 }
 
-.description-text {
+.date-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-full);
+  color: var(--text-tertiary);
+  font-size: var(--font-size-sm);
+}
+
+.post-title {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--text-primary);
+  margin: 0;
+  line-height: var(--line-height-snug);
+  letter-spacing: -0.5px;
+}
+
+/* 简介 */
+.desc-wrap {
+  flex: 1;
+}
+
+.desc-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-tertiary);
+  margin-bottom: var(--spacing-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.label-line {
+  width: 3px;
+  height: 14px;
+  border-radius: var(--radius-full);
+  background: var(--primary-gradient);
+  flex-shrink: 0;
+}
+
+.desc-text {
   font-size: var(--font-size-md);
   color: var(--text-secondary);
   line-height: var(--line-height-relaxed);
-  text-indent: 2em;
   margin: 0;
 }
 
-.action-buttons {
+/* 操作按钮行 */
+.action-bar {
   display: flex;
-  gap: var(--spacing-base);
-  justify-content: flex-end;
-  padding-top: var(--spacing-md);
+  gap: var(--spacing-sm);
+  padding-top: var(--spacing-lg);
   border-top: 1px solid var(--border-lighter);
   flex-wrap: wrap;
 }
 
 .action-btn {
-  padding: 10px var(--spacing-lg);
-  font-weight: var(--font-weight-medium);
-  border-radius: var(--radius-base);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  border: 1.5px solid var(--border-base);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
   transition: all var(--transition-cubic);
+  font-family: var(--font-family);
 }
 
 .action-btn:hover {
   transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
 }
 
-/* ── 评论区域 ── */
-.comments-section {
-  margin-top: var(--spacing-xl);
-  margin-bottom: var(--spacing-2xl);
-}
+/* 收藏 */
+.collect-btn:hover { border-color: var(--warning-color); color: var(--warning-color); background: rgba(245,158,11,0.06); }
+.collect-btn.active { border-color: var(--warning-color); color: var(--warning-color); background: rgba(245,158,11,0.1); }
 
-.comment-card {
-  margin-bottom: var(--spacing-xl);
-}
+/* 赞 */
+.zan-btn:hover { border-color: var(--success-color); color: var(--success-color); background: var(--success-light); }
+.zan-btn.active { border-color: var(--success-color); color: var(--success-color); background: var(--success-light); }
 
-.comment-header {
+/* 踩 */
+.cai-btn:hover { border-color: var(--text-disabled); color: var(--text-disabled); }
+.cai-btn.active { border-color: var(--text-disabled); color: var(--text-disabled); background: var(--bg-tertiary); }
+
+/* 写长评 */
+.share-btn {
+  margin-left: auto;
+  background: var(--primary-gradient);
+  border-color: var(--primary-color);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(15,118,110,0.25);
+}
+.share-btn:hover { box-shadow: var(--shadow-primary); }
+
+/* ════════════════════════════════════════
+   评论区整体
+════════════════════════════════════════ */
+.comments-wrap {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--spacing-lg);
-  padding-bottom: var(--spacing-md);
-  border-bottom: 2px solid var(--border-lighter);
+  flex-direction: column;
+  gap: var(--spacing-xl);
 }
 
-.section-title-large {
+.comment-section {
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-lighter);
+  box-shadow: var(--shadow-base);
+  padding: var(--spacing-2xl);
+  transition: box-shadow var(--transition-base);
+}
+
+.comment-section:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* 区块标题 */
+.section-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-lighter);
+}
+
+.section-hd-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-base);
+}
+
+.hd-icon-wrap {
+  width: 44px; height: 44px;
+  border-radius: var(--radius-base);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.hd-icon-wrap.green { background: var(--primary-gradient-soft); color: var(--primary-color); }
+.hd-icon-wrap.blue  { background: rgba(14,165,233,0.1); color: #0ea5e9; }
+
+.section-hd-title {
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
   color: var(--text-primary);
+  margin: 0 0 2px;
+  line-height: 1;
+}
+
+.section-hd-sub {
+  font-size: var(--font-size-xs);
+  color: var(--text-disabled);
   margin: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
 }
 
-.section-title-large i {
-  color: var(--primary-color);
-}
-
-.publish-btn {
+.write-btn {
+  background: var(--primary-gradient);
+  border: none;
   border-radius: var(--radius-base);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-semibold);
+  box-shadow: 0 2px 8px rgba(15,118,110,0.25);
+  gap: 5px;
 }
 
-/* ── 长评列表 ── */
-.long-comments-list {
-  margin-top: var(--spacing-md);
+/* ════════════════════════════════════════
+   长评列表
+════════════════════════════════════════ */
+.long-list {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-base);
 }
 
-.long-comment-item {
+.long-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-base);
   padding: var(--spacing-md) var(--spacing-lg);
   background: var(--bg-secondary);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   border-left: 3px solid var(--primary-color);
   transition: all var(--transition-base);
 }
 
-.long-comment-item:hover {
+.long-item:hover {
   background: var(--bg-hover);
   box-shadow: var(--shadow-sm);
-  transform: translateX(2px);
+  transform: translateX(3px);
 }
 
-.comment-main {
-  margin-bottom: var(--spacing-sm);
+.long-avatar {
+  background: var(--primary-gradient) !important;
+  color: #fff !important;
+  font-weight: var(--font-weight-bold) !important;
+  flex-shrink: 0;
 }
 
-.long-comment-title {
-  font-size: var(--font-size-lg);
+.long-item-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.long-title {
+  font-size: var(--font-size-md);
   font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
-  margin: 0 0 var(--spacing-sm) 0;
+  margin: 0 0 var(--spacing-sm);
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
   transition: color var(--transition-base);
 }
 
-.long-comment-title:hover {
+.long-title:hover { color: var(--primary-color); }
+
+.link-arrow {
+  font-size: 13px;
+  color: var(--text-disabled);
+  opacity: 0;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.long-title:hover .link-arrow {
+  opacity: 1;
+  transform: translateX(3px);
   color: var(--primary-color);
 }
 
-.comment-meta {
+.long-meta {
   display: flex;
-  gap: var(--spacing-md);
+  gap: var(--spacing-base);
+  flex-wrap: wrap;
+}
+
+.meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: var(--font-size-xs);
   color: var(--text-disabled);
 }
 
-.comment-author,
-.comment-time {
+.long-item-actions {
   display: flex;
+  gap: var(--spacing-xs);
+  flex-shrink: 0;
+}
+
+/* 文字操作按钮 */
+.text-action {
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
+  padding: 4px 10px;
+  border: none;
+  background: none;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: var(--font-family);
+  color: var(--text-disabled);
 }
 
-.comment-actions {
+.text-action:hover { background: var(--bg-tertiary); }
+.text-action.follow:hover { color: var(--primary-color); background: var(--primary-gradient-soft); }
+.text-action.reply:hover  { color: var(--info-color);   background: var(--info-light); }
+.text-action.warn:hover   { color: var(--warning-color); background: var(--warning-light); }
+.text-action.danger:hover { color: var(--danger-color);  background: var(--danger-light); }
+
+/* ════════════════════════════════════════
+   短评输入区
+════════════════════════════════════════ */
+.input-area {
   display: flex;
-  gap: var(--spacing-sm);
-  flex-wrap: wrap;
-  margin-top: var(--spacing-sm);
-}
-
-.action-link {
-  padding: 3px var(--spacing-sm);
-  font-size: var(--font-size-sm);
-  color: var(--text-tertiary);
-  transition: color var(--transition-base);
-}
-
-.action-link.danger,
-.action-link.danger:hover {
-  color: var(--danger-color);
-}
-
-/* ── 短评输入框 ── */
-.comment-input-section {
-  margin: var(--spacing-lg) 0;
+  gap: var(--spacing-base);
+  margin-bottom: var(--spacing-xl);
+  align-items: flex-start;
   padding: var(--spacing-lg);
   background: var(--bg-secondary);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border-lighter);
 }
 
-.comment-textarea :deep(.el-textarea__inner) {
-  border-radius: var(--radius-base) !important;
-  border: 1.5px solid var(--border-light) !important;
-  background: var(--bg-primary) !important;
-  resize: none !important;
-  font-family: var(--font-family) !important;
+.input-avatar {
+  background: var(--primary-gradient) !important;
+  color: #fff !important;
+  font-weight: var(--font-weight-bold) !important;
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
-.comment-textarea :deep(.el-textarea__inner:focus) {
-  border-color: var(--primary-color) !important;
-  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1) !important;
-}
+.input-box { flex: 1; min-width: 0; }
 
-.comment-submit {
-  text-align: right;
-  margin-top: var(--spacing-base);
-}
-
-.submit-btn {
+.comment-input :deep(.el-textarea__inner) {
   border-radius: var(--radius-base);
-  padding: 10px var(--spacing-xl);
-  font-weight: var(--font-weight-semibold);
+  border: 1.5px solid var(--border-light);
+  background: var(--bg-primary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-relaxed);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  resize: none;
 }
 
-/* ── 短评列表 ── */
-.short-comments-list {
-  margin-top: var(--spacing-lg);
+.comment-input :deep(.el-textarea__inner:focus) {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(15,118,110,0.1);
+}
+
+.input-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--spacing-sm);
+}
+
+.input-hint {
+  font-size: var(--font-size-xs);
+  color: var(--text-disabled);
+}
+
+.send-btn {
+  background: var(--primary-gradient);
+  border: none;
+  border-radius: var(--radius-full);
+  padding: 7px 20px;
+  font-weight: var(--font-weight-semibold);
+  box-shadow: 0 2px 8px rgba(15,118,110,0.25);
+  gap: 5px;
+  transition: all var(--transition-base);
+}
+
+.send-btn:hover {
+  box-shadow: var(--shadow-primary);
+  transform: translateY(-1px);
+}
+
+/* ════════════════════════════════════════
+   短评列表
+════════════════════════════════════════ */
+.short-list {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-base);
 }
 
-.short-comment-item {
+.short-item {
   display: flex;
   gap: var(--spacing-md);
   padding: var(--spacing-md) var(--spacing-lg);
   background: var(--bg-secondary);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border-lighter);
   transition: all var(--transition-base);
 }
 
-.short-comment-item:hover {
+.short-item:hover {
   background: var(--bg-hover);
   border-color: var(--border-primary);
   box-shadow: var(--shadow-xs);
 }
 
-.comment-avatar { flex-shrink: 0; }
+.short-avatar {
+  background: var(--primary-gradient-soft) !important;
+  color: var(--primary-dark) !important;
+  font-weight: var(--font-weight-bold) !important;
+  flex-shrink: 0;
+}
 
-.comment-content { flex: 1; min-width: 0; }
+.short-body { flex: 1; min-width: 0; }
 
-.comment-header-info {
+.short-hd {
   display: flex;
   align-items: center;
   gap: var(--spacing-base);
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: 6px;
 }
 
-.comment-author-name {
+.short-name {
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
-  font-size: var(--font-size-md);
 }
 
-.comment-time-text {
+.short-time {
   font-size: var(--font-size-xs);
   color: var(--text-disabled);
 }
 
-.comment-text {
+.short-text {
   color: var(--text-secondary);
   line-height: var(--line-height-relaxed);
-  margin-bottom: var(--spacing-base);
+  margin: 0 0 var(--spacing-sm);
   font-size: var(--font-size-base);
   word-break: break-word;
 }
 
-.reply-content {
+/* 回复引用 */
+.reply-quote {
   background: var(--bg-primary);
-  border-left: 3px solid var(--primary-lighter);
-  padding: var(--spacing-base);
-  margin: var(--spacing-base) 0;
+  border-left: 3px solid var(--border-base);
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: var(--spacing-sm) var(--spacing-base);
+  margin-bottom: var(--spacing-sm);
 }
 
-.reply-header {
+.quote-label {
   font-size: var(--font-size-xs);
   color: var(--text-tertiary);
-  margin-bottom: 5px;
   display: flex;
   align-items: center;
   gap: 4px;
+  margin-bottom: 4px;
 }
 
-.reply-text {
-  color: var(--text-secondary);
+.quote-text {
+  color: var(--text-tertiary);
   font-size: var(--font-size-sm);
+  margin: 0;
   line-height: var(--line-height-snug);
 }
 
-.comment-footer {
+.short-ft {
   display: flex;
-  gap: var(--spacing-sm);
-  margin-top: var(--spacing-sm);
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-xs);
 }
 
-.reply-btn { font-size: var(--font-size-sm); color: var(--text-tertiary); }
-.reply-btn:hover { color: var(--primary-color); }
-
-.report-btn,
-.delete-btn {
-  font-size: var(--font-size-sm);
-  color: var(--text-disabled);
-}
-
-.report-btn:hover,
-.delete-btn:hover { color: var(--danger-color); }
-
-/* ── 空状态 ── */
-.empty-comments {
+/* ════════════════════════════════════════
+   空状态
+════════════════════════════════════════ */
+.empty-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-3xl);
   text-align: center;
-  padding: var(--spacing-3xl) var(--spacing-lg);
   color: var(--text-disabled);
+}
+
+.empty-ico {
+  font-size: 40px;
+  margin-bottom: var(--spacing-base);
+  opacity: 0.4;
+}
+
+.empty-block p {
   font-size: var(--font-size-md);
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  border: 1px dashed var(--border-light);
+  margin: 0;
+}
+
+/* ════════════════════════════════════════
+   弹窗
+════════════════════════════════════════ */
+.video-player {
+  width: 100%;
+  border-radius: var(--radius-base);
+  display: block;
+}
+
+.no-video {
+  text-align: center;
+  padding: var(--spacing-3xl);
+  color: var(--text-disabled);
+}
+
+.long-preview {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.reply-input :deep(.el-textarea__inner) {
+  border-radius: var(--radius-base);
+  font-family: var(--font-family);
+}
+
+/* ════════════════════════════════════════
+   响应式
+════════════════════════════════════════ */
+@media (max-width: 860px) {
+  .post-main-card {
+    grid-template-columns: 1fr;
+  }
+
+  .cover-img { min-height: 240px; height: 240px; }
+  .cover-fallback { min-height: 240px; }
+
+  .post-info { padding: var(--spacing-lg); }
+
+  .post-title { font-size: var(--font-size-2xl); }
+
+  .comment-section { padding: var(--spacing-lg); }
+}
+
+@media (max-width: 480px) {
+  .long-item {
+    flex-wrap: wrap;
+  }
+
+  .long-item-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .action-bar {
+    gap: var(--spacing-xs);
+  }
+
+  .action-btn {
+    padding: 7px 12px;
+    font-size: var(--font-size-xs);
+  }
 }
 </style>

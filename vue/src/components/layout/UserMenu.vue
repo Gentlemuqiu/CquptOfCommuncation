@@ -2,17 +2,17 @@
   <div class="user-section">
     <!-- 通知图标 -->
     <el-badge :value="noticeCount" :hidden="noticeCount === 0" class="notice-badge">
-      <el-button 
-        circle 
-        icon="el-icon-bell" 
+      <el-button
+        circle
+        :icon="Bell"
         class="notice-btn"
         @click="handleNoticeClick"
       />
     </el-badge>
 
     <!-- 登录按钮 -->
-    <el-button 
-      v-if="!user.id" 
+    <el-button
+      v-if="!user.id"
       @click="handleLogin"
       type="primary"
       class="login-btn"
@@ -23,7 +23,7 @@
     <!-- 用户下拉菜单 -->
     <el-dropdown v-else trigger="click" class="user-dropdown">
       <div class="user-info">
-        <el-avatar 
+        <el-avatar
           :size="38"
           :src="user.avatar || defaultAvatar"
           @error="handleAvatarError"
@@ -32,20 +32,21 @@
           {{ user.nickName ? user.nickName[0].toUpperCase() : 'U' }}
         </el-avatar>
         <span class="user-name">{{ user.nickName || user.username }}</span>
-        <i class="el-icon-arrow-down"></i>
+        <el-icon class="dropdown-arrow"><ArrowDown /></el-icon>
       </div>
 
       <template #dropdown>
         <el-dropdown-menu>
-          <el-dropdown-item 
-            v-for="item in menuItems" 
+          <el-dropdown-item
+            v-for="item in menuItems"
             :key="item.path"
             @click="handleMenuClick(item.path)"
           >
-            <i :class="item.icon"></i> {{ item.label }}
+            <el-icon><component :is="item.icon" /></el-icon>
+            {{ item.label }}
           </el-dropdown-item>
           <el-dropdown-item divided @click="handleLogout">
-            <i class="el-icon-switch-button"></i> 退出登录
+            <el-icon><SwitchButton /></el-icon> 退出登录
           </el-dropdown-item>
         </el-dropdown-menu>
       </template>
@@ -55,9 +56,11 @@
 
 <script>
 import { getUserDropdownItems } from '@/config/navigation';
+import { Bell, ArrowDown, SwitchButton } from '@element-plus/icons-vue';
 
 export default {
   name: 'UserMenu',
+  components: { Bell, ArrowDown, SwitchButton },
   props: {
     user: {
       type: Object,
@@ -70,6 +73,7 @@ export default {
   },
   data() {
     return {
+      Bell,
       defaultAvatar: 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
     }
   },
@@ -186,14 +190,24 @@ export default {
   color: var(--primary-color);
 }
 
-:deep(.el-dropdown-menu__item i) {
+.dropdown-arrow {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  transition: transform var(--transition-base);
+}
+
+.user-info:hover .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+:deep(.el-dropdown-menu__item .el-icon) {
   margin-right: var(--spacing-sm);
   color: var(--text-secondary);
   width: 16px;
   text-align: center;
 }
 
-:deep(.el-dropdown-menu__item:hover i) {
+:deep(.el-dropdown-menu__item:hover .el-icon) {
   color: var(--primary-color);
 }
 
@@ -201,8 +215,8 @@ export default {
   .user-name {
     display: none;
   }
-  
-  .user-info i {
+
+  .dropdown-arrow {
     display: none;
   }
 }

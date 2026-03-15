@@ -22,7 +22,7 @@
             class="menu-item"
             @click="handleMenuClick(item.path)"
           >
-            <i :class="item.icon" class="menu-icon"></i>
+            <el-icon class="menu-icon"><component :is="item.icon" /></el-icon>
             <span>{{ item.label }}</span>
             <span v-if="isActive(item.path)" class="active-dot"></span>
           </li>
@@ -32,7 +32,7 @@
       <!-- 右侧留白（UserMenu在top-bar里） -->
       <div class="nav-right">
         <div class="nav-badge">
-          <i class="el-icon-office-building"></i>
+          <el-icon><OfficeBuilding /></el-icon>
           <span>重庆邮电大学</span>
         </div>
       </div>
@@ -42,9 +42,11 @@
 
 <script>
 import { getFrontMenuItems } from '@/config/navigation';
+import { OfficeBuilding } from '@element-plus/icons-vue';
 
 export default {
   name: 'Navbar',
+  components: { OfficeBuilding },
   props: {
     user: {
       type: Object,
@@ -205,8 +207,9 @@ export default {
 }
 
 .menu-icon {
-  font-size: 14px;
+  font-size: 15px;
   transition: transform var(--transition-cubic);
+  flex-shrink: 0;
 }
 
 .menu-item:hover {
@@ -216,6 +219,10 @@ export default {
 
 .menu-item:hover .menu-icon {
   transform: scale(1.15);
+}
+
+.nav-badge .el-icon {
+  font-size: 12px;
 }
 
 .menu-item-active {

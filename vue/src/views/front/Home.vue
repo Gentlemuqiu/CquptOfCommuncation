@@ -1,60 +1,57 @@
 <template>
   <div class="home-container">
-    <!-- 英雄横幅 -->
+
+    <!-- ════════════════ 英雄横幅 ════════════════ -->
     <div class="hero-banner">
-      <div class="hero-content">
-        <div class="hero-text">
-          <div class="hero-tag">🎓 重庆邮电大学</div>
-          <h1 class="hero-title">就业信息中心</h1>
-          <p class="hero-desc">汇聚校园招聘 · 实习机会 · 求职指南，助力你迈出职业第一步</p>
-          <div class="hero-stats">
-            <div class="stat-item">
-              <span class="stat-num">{{ total }}</span>
-              <span class="stat-label">条信息</span>
-            </div>
-            <div class="stat-divider"></div>
-            <div class="stat-item">
-              <span class="stat-num">{{ areas.length }}</span>
-              <span class="stat-label">大分类</span>
-            </div>
-          </div>
+      <!-- 装饰光斑 -->
+      <div class="deco deco-1"></div>
+      <div class="deco deco-2"></div>
+      <div class="deco deco-3"></div>
+
+      <div class="hero-inner">
+        <div class="hero-tag">
+          <el-icon><School /></el-icon>
+          重庆邮电大学
         </div>
-        <div class="hero-features">
-          <div class="feature-chip">
-            <i class="el-icon-document"></i>
-            <span>信息发布</span>
+        <h1 class="hero-title">就业信息中心</h1>
+        <p class="hero-desc">汇聚校园招聘 · 实习机会 · 求职指南，助力你迈出职业第一步</p>
+
+        <!-- 统计数字 -->
+        <div class="hero-stats">
+          <div class="stat-item">
+            <el-icon class="stat-icon"><Document /></el-icon>
+            <span class="stat-num">{{ total }}</span>
+            <span class="stat-label">条信息</span>
           </div>
-          <div class="feature-chip">
-            <i class="el-icon-chat-line-round"></i>
-            <span>互动评论</span>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <el-icon class="stat-icon"><Grid /></el-icon>
+            <span class="stat-num">{{ areas.length }}</span>
+            <span class="stat-label">大分类</span>
           </div>
-          <div class="feature-chip">
-            <i class="el-icon-star-on"></i>
-            <span>收藏管理</span>
-          </div>
-          <div class="feature-chip">
-            <i class="el-icon-search"></i>
-            <span>全文检索</span>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <el-icon class="stat-icon"><Collection /></el-icon>
+            <span class="stat-num">{{ areas.map(a=>a.label).join(' / ') }}</span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 轮播图 -->
-    <div class="section-block">
-      <el-carousel
-        height="420px"
-        indicator-position="inside"
-        arrow="always"
-        :interval="4000"
-      >
-        <el-carousel-item v-for="(item, index) in imgs" :key="item.img">
+    <!-- ════════════════ 轮播图 ════════════════ -->
+    <div class="section-block carousel-block">
+      <el-carousel height="400px" indicator-position="inside" arrow="always" :interval="4000">
+        <el-carousel-item v-for="item in imgs" :key="item.img">
           <a :href="item.link" target="_blank" rel="noopener">
             <div class="carousel-wrap">
-              <img :src="item.img" :alt="item.label" class="carousel-img">
+              <img :src="item.img" :alt="item.label" class="carousel-img" />
               <div class="carousel-overlay">
+                <div class="carousel-badge">外部链接</div>
                 <span class="carousel-label">{{ item.label }}</span>
-                <p class="carousel-hint">点击了解更多 →</p>
+                <p class="carousel-hint">
+                  <el-icon><Link /></el-icon>
+                  点击访问官网 →
+                </p>
               </div>
             </div>
           </a>
@@ -62,62 +59,115 @@
       </el-carousel>
     </div>
 
-    <!-- 分类筛选 -->
+    <!-- ════════════════ 分类选择 ════════════════ -->
     <div class="section-block category-block">
-      <div class="block-header">
-        <h2 class="block-title">
-          <i class="el-icon-menu"></i> 信息分类
-        </h2>
-        <span class="block-desc">选择你感兴趣的类别快速筛选</span>
+      <div class="section-header">
+        <div class="header-left">
+          <div class="section-accent"></div>
+          <div>
+            <h2 class="section-title">信息分类</h2>
+            <p class="section-sub">选择你感兴趣的类别快速浏览</p>
+          </div>
+        </div>
       </div>
-      <div class="category-tabs">
+
+      <div class="category-grid">
         <button
           v-for="item in areas"
           :key="item.key"
-          :class="['cat-tab', { active: item.key === activeArea }]"
+          :class="['cat-card', { active: item.key === activeArea }]"
           @click="loadArea(1, item.key)"
         >
-          <span class="cat-icon">{{ item.icon }}</span>
-          <span class="cat-label">{{ item.label }}</span>
+          <span class="cat-emoji">{{ item.icon }}</span>
+          <span class="cat-name">{{ item.label }}</span>
+          <div class="cat-check" v-if="item.key === activeArea">
+            <el-icon><Check /></el-icon>
+          </div>
         </button>
       </div>
     </div>
 
-    <!-- 信息列表 -->
+    <!-- ════════════════ 信息列表 ════════════════ -->
     <div class="section-block list-block">
-      <div class="block-header">
-        <h2 class="block-title">
-          <i class="el-icon-s-order"></i>
-          {{ currentAreaLabel }} · 信息列表
-        </h2>
-        <span class="result-count" v-if="total > 0">共 {{ total }} 条</span>
+      <div class="section-header">
+        <div class="header-left">
+          <div class="section-accent"></div>
+          <div>
+            <h2 class="section-title">
+              <span class="area-dot">{{ currentAreaEmoji }}</span>
+              {{ currentAreaLabel }}
+            </h2>
+            <p class="section-sub">精选就业信息，助力职业发展</p>
+          </div>
+        </div>
+        <div class="header-right" v-if="total > 0">
+          <div class="count-badge">
+            <el-icon><Document /></el-icon>
+            共 {{ total }} 条
+          </div>
+        </div>
+      </div>
+
+      <!-- 骨架屏 -->
+      <div v-if="listLoading" class="skeleton-grid">
+        <div v-for="n in skeletonCount" :key="n" class="skeleton-card">
+          <div class="sk-img"></div>
+          <div class="sk-body">
+            <div class="sk-line sk-t1"></div>
+            <div class="sk-line sk-t2"></div>
+            <div class="sk-line sk-t3"></div>
+          </div>
+        </div>
       </div>
 
       <!-- 卡片网格 -->
-      <div v-if="tableDataArea.length > 0" class="info-grid">
+      <div v-else-if="tableDataArea.length > 0" class="info-grid">
         <div
           v-for="item in tableDataArea"
           :key="item.id"
           class="info-card"
           @click="$router.push('/front/detail?id=' + item.id)"
         >
+          <!-- 封面图 -->
           <div class="card-img-wrap">
-            <el-image :src="item.img" fit="cover" class="card-img" />
+            <el-image :src="item.img" fit="cover" class="card-img">
+              <template #error>
+                <div class="img-fallback">
+                  <el-icon><Picture /></el-icon>
+                </div>
+              </template>
+            </el-image>
+
+            <!-- 分类徽章 -->
             <div class="card-area-badge">{{ item.area }}</div>
+
+            <!-- 热门徽章 -->
+            <div class="hot-badge" v-if="(item.zan || 0) >= 3">
+              🔥 热门
+            </div>
+
+            <!-- 悬浮遮罩 -->
+            <div class="card-hover-mask">
+              <div class="mask-view-btn">
+                <el-icon><View /></el-icon>
+                查看详情
+              </div>
+            </div>
           </div>
+
+          <!-- 正文 -->
           <div class="card-body">
-            <h3 class="card-name">{{ item.name }}</h3>
+            <h3 class="card-name" :title="item.name">{{ item.name }}</h3>
             <p class="card-desc">{{ item.description }}</p>
             <div class="card-footer">
               <span class="card-date">
-                <i class="el-icon-time"></i>
+                <el-icon><Calendar /></el-icon>
                 {{ item.date }}
               </span>
-              <div class="card-actions">
-                <span class="action-item">
-                  <i class="el-icon-thumb"></i> {{ item.zan || 0 }}
-                </span>
-              </div>
+              <span class="card-zan" :class="{ active: (item.zan || 0) > 0 }">
+                <el-icon><Sunny /></el-icon>
+                {{ item.zan || 0 }}
+              </span>
             </div>
           </div>
         </div>
@@ -125,8 +175,12 @@
 
       <!-- 空状态 -->
       <div v-else class="empty-state">
-        <i class="el-icon-document empty-icon"></i>
-        <p>该分类暂无信息</p>
+        <div class="empty-illus">
+          <div class="empty-circle"></div>
+          <el-icon class="empty-icon"><Document /></el-icon>
+        </div>
+        <p class="empty-title">该分类暂无信息</p>
+        <p class="empty-hint">换个分类看看，或发布第一条信息吧</p>
       </div>
 
       <!-- 分页 -->
@@ -137,27 +191,30 @@
           :current-page="pageNum"
           :page-sizes="[8, 12, 24]"
           :page-size="pageSize"
-          layout="prev, pager, next, sizes"
+          layout="prev, pager, next, sizes, total"
           :total="total"
+          background
         />
       </div>
     </div>
+
   </div>
 </template>
 
 <script>
 import request from "@/utils/request";
-
-const AREAS = [
-  { key: '校园招聘', label: '校园招聘', icon: '🏫' },
-  { key: '实习信息', label: '实习信息', icon: '💼' },
-  { key: '社会招聘', label: '社会招聘', icon: '🏢' },
-  { key: '求职技巧', label: '求职技巧', icon: '💡' },
-  { key: '行业动态', label: '行业动态', icon: '📊' },
-];
+import { INFO_AREAS } from "@/config/navigation";
+import {
+  School, Document, Grid, Collection,
+  Link, Check, Picture, View, Calendar, Sunny
+} from '@element-plus/icons-vue'
 
 export default {
   name: "Home",
+  components: {
+    School, Document, Grid, Collection,
+    Link, Check, Picture, View, Calendar, Sunny
+  },
   data() {
     return {
       imgs: [
@@ -165,18 +222,27 @@ export default {
         { img: require("@/assets/image/bg1.png"), link: 'https://software.cqupt.edu.cn/', label: '软件工程学院' },
         { img: require("@/assets/image/bg3.png"), link: 'https://zjc.cqupt.edu.cn/', label: '就业指导中心' }
       ],
-      areas: AREAS,
+      areas: INFO_AREAS,
       tableDataArea: [],
       pageNum: 1,
       pageSize: 12,
       total: 0,
-      activeArea: AREAS[0].key
+      activeArea: INFO_AREAS[0].key,
+      listLoading: false
     };
   },
   computed: {
     currentAreaLabel() {
       const found = this.areas.find(a => a.key === this.activeArea);
       return found ? found.label : '';
+    },
+    currentAreaEmoji() {
+      const found = this.areas.find(a => a.key === this.activeArea);
+      return found ? found.icon : '';
+    },
+    skeletonCount() {
+      // 骨架屏最多显示 8 个，避免撑出白色大空白
+      return Math.min(this.pageSize, 8);
     }
   },
   created() {
@@ -186,11 +252,14 @@ export default {
     loadArea(pageNum, area) {
       this.activeArea = area;
       this.pageNum = pageNum;
+      this.listLoading = true;
       request.get("/movie/page/area", {
         params: { pageNum, pageSize: this.pageSize, area }
       }).then(res => {
         this.tableDataArea = res.data.records || [];
         this.total = res.data.total || 0;
+      }).finally(() => {
+        this.listLoading = false;
       });
     },
     handleSizeChange(pageSize) {
@@ -199,164 +268,156 @@ export default {
     },
     handleCurrentChange(pageNum) {
       this.loadArea(pageNum, this.activeArea);
-    }
+    },
   }
 };
 </script>
 
 <style scoped>
+/* ════════════════════════════════════════
+   页面基础
+════════════════════════════════════════ */
 .home-container {
-  background: transparent;
-  padding-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-2xl);
 }
 
-/* ── 英雄横幅 ── */
+/* ════════════════════════════════════════
+   英雄横幅
+════════════════════════════════════════ */
 .hero-banner {
   background: var(--nav-bg);
-  margin: 0 calc(-1 * var(--spacing-lg));
-  padding: var(--spacing-2xl) var(--spacing-xl);
+  border-radius: var(--radius-xl);
+  margin-bottom: var(--spacing-lg);
   position: relative;
   overflow: hidden;
-  border-radius: var(--radius-xl);
-  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-2xl) var(--spacing-2xl) 0;
 }
 
-.hero-banner::before {
-  content: '';
+/* 装饰光斑 */
+.deco {
   position: absolute;
-  top: -100px;
-  right: -100px;
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, rgba(15, 118, 110, 0.2) 0%, transparent 70%);
+  border-radius: 50%;
   pointer-events: none;
 }
-
-.hero-banner::after {
-  content: '';
-  position: absolute;
-  bottom: -60px;
-  left: -60px;
-  width: 280px;
-  height: 280px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, transparent 70%);
-  pointer-events: none;
+.deco-1 {
+  top: -120px; right: -80px;
+  width: 420px; height: 420px;
+  background: radial-gradient(circle, rgba(15,118,110,0.22) 0%, transparent 70%);
+}
+.deco-2 {
+  bottom: -80px; left: -60px;
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%);
+}
+.deco-3 {
+  top: 40px; left: 40%;
+  width: 180px; height: 180px;
+  background: radial-gradient(circle, rgba(20,184,166,0.08) 0%, transparent 70%);
 }
 
-.hero-content {
+.hero-inner {
   position: relative;
   z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-2xl);
-  max-width: 960px;
+  max-width: 720px;
   margin: 0 auto;
+  padding-bottom: var(--spacing-2xl);
+  text-align: center;
 }
-
-.hero-text { flex: 1; }
 
 .hero-tag {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 12px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 5px 14px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
   border-radius: var(--radius-full);
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255,255,255,0.7);
   font-size: var(--font-size-xs);
   letter-spacing: 0.5px;
-  margin-bottom: var(--spacing-base);
+  margin-bottom: var(--spacing-md);
 }
 
 .hero-title {
   font-size: var(--font-size-4xl);
   font-weight: var(--font-weight-extrabold);
-  color: #fff;
   margin: 0 0 var(--spacing-base);
-  line-height: 1.15;
-  background: linear-gradient(135deg, #fff 0%, rgba(20, 184, 166, 0.85) 100%);
+  line-height: 1.1;
+  background: linear-gradient(135deg, #ffffff 0%, rgba(20,184,166,0.9) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  letter-spacing: -0.5px;
+  letter-spacing: -1px;
 }
 
 .hero-desc {
   font-size: var(--font-size-md);
-  color: rgba(255, 255, 255, 0.6);
-  margin: 0 0 var(--spacing-lg);
+  color: rgba(255,255,255,0.58);
+  margin: 0 0 var(--spacing-xl);
   line-height: var(--line-height-relaxed);
-  max-width: 440px;
 }
 
+/* 统计行 */
 .hero-stats {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: var(--spacing-lg);
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius-full);
+  padding: var(--spacing-sm) var(--spacing-xl);
+  backdrop-filter: blur(6px);
 }
 
 .stat-item {
   display: flex;
-  align-items: baseline;
-  gap: 4px;
+  align-items: center;
+  gap: 6px;
+}
+
+.stat-icon {
+  color: var(--primary-lighter);
+  font-size: 15px;
+  flex-shrink: 0;
 }
 
 .stat-num {
-  font-size: var(--font-size-2xl);
+  font-size: var(--font-size-md);
   font-weight: var(--font-weight-bold);
-  color: var(--primary-lighter);
+  color: #fff;
 }
 
 .stat-label {
-  font-size: var(--font-size-sm);
-  color: rgba(255, 255, 255, 0.5);
+  font-size: var(--font-size-xs);
+  color: rgba(255,255,255,0.5);
 }
 
 .stat-divider {
   width: 1px;
-  height: 24px;
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.hero-features {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
+  height: 18px;
+  background: rgba(255,255,255,0.15);
   flex-shrink: 0;
 }
 
-.feature-chip {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-base);
-  color: rgba(255, 255, 255, 0.75);
-  font-size: var(--font-size-sm);
-  transition: all var(--transition-base);
-  cursor: default;
-}
-
-.feature-chip:hover {
-  background: rgba(255, 255, 255, 0.13);
-  color: #fff;
-}
-
-/* ── 通用区块 ── */
+/* ════════════════════════════════════════
+   通用区块
+════════════════════════════════════════ */
 .section-block {
   background: var(--bg-primary);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-xl);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl) var(--spacing-2xl);
   margin-bottom: var(--spacing-lg);
   box-shadow: var(--shadow-base);
   border: 1px solid var(--border-lighter);
+  transition: box-shadow var(--transition-base);
 }
 
-.block-header {
+.section-block:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* 区块标题 */
+.section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -365,49 +426,65 @@ export default {
   gap: var(--spacing-base);
 }
 
-.block-title {
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-base);
+}
+
+.section-accent {
+  width: 4px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background: var(--primary-gradient);
+  flex-shrink: 0;
+}
+
+.section-title {
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
   color: var(--text-primary);
-  margin: 0;
+  margin: 0 0 2px;
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
 }
 
-.block-title i {
-  color: var(--primary-color);
-}
+.area-dot { font-size: 18px; }
 
-.block-desc {
+.section-sub {
   font-size: var(--font-size-sm);
-  color: var(--text-tertiary);
+  color: var(--text-disabled);
+  margin: 0;
 }
 
-.result-count {
+.count-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   font-size: var(--font-size-sm);
   color: var(--text-tertiary);
   background: var(--bg-tertiary);
-  padding: 3px 10px;
+  padding: 4px 12px;
   border-radius: var(--radius-full);
 }
 
-/* ── 轮播图 ── */
+/* ════════════════════════════════════════
+   轮播图
+════════════════════════════════════════ */
+.carousel-block { padding: var(--spacing-lg); }
+
 .carousel-wrap {
   position: relative;
-  width: 100%;
-  height: 100%;
-  border-radius: var(--radius-base);
+  width: 100%; height: 100%;
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
-.carousel-wrap:hover .carousel-img {
-  transform: scale(1.03);
-}
+.carousel-wrap:hover .carousel-img { transform: scale(1.03); }
 
 .carousel-img {
-  width: 100%;
-  height: 100%;
+  width: 100%; height: 100%;
   object-fit: cover;
   transition: transform var(--transition-slow);
   display: block;
@@ -415,32 +492,45 @@ export default {
 
 .carousel-overlay {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%);
+  bottom: 0; left: 0; right: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.1) 60%, transparent 100%);
   padding: var(--spacing-3xl) var(--spacing-xl) var(--spacing-xl);
   color: #fff;
 }
 
+.carousel-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: var(--radius-full);
+  padding: 2px 10px;
+  margin-bottom: 8px;
+  letter-spacing: 0.05em;
+}
+
 .carousel-label {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 
 .carousel-hint {
-  font-size: var(--font-size-sm);
   margin: 0;
-  opacity: 0.75;
+  font-size: var(--font-size-sm);
+  opacity: 0.7;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 :deep(.el-carousel__arrow) {
-  background: rgba(255,255,255,0.9);
+  background: rgba(255,255,255,0.92);
   color: var(--primary-dark);
-  width: 40px;
-  height: 40px;
+  width: 40px; height: 40px;
   box-shadow: var(--shadow-md);
   transition: all var(--transition-cubic);
 }
@@ -451,60 +541,149 @@ export default {
 }
 
 :deep(.el-carousel__indicator .el-carousel__button) {
-  width: 8px;
-  height: 8px;
+  width: 8px; height: 8px;
   border-radius: var(--radius-full);
-  background: rgba(255,255,255,0.6);
+  background: rgba(255,255,255,0.55);
 }
 
 :deep(.el-carousel__indicator.is-active .el-carousel__button) {
-  width: 24px;
+  width: 28px;
   border-radius: 4px;
   background: var(--primary-lighter);
 }
 
-/* ── 分类标签页 ── */
-.category-tabs {
-  display: flex;
-  gap: var(--spacing-sm);
-  flex-wrap: wrap;
+/* ════════════════════════════════════════
+   分类卡片
+════════════════════════════════════════ */
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--spacing-base);
 }
 
-.cat-tab {
+.cat-card {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 10px var(--spacing-lg);
+  gap: var(--spacing-sm);
+  padding: var(--spacing-lg) var(--spacing-base);
   background: var(--bg-secondary);
   border: 1.5px solid var(--border-light);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   cursor: pointer;
   transition: all var(--transition-cubic);
+  outline: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.cat-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--primary-gradient);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+
+.cat-card:hover {
+  border-color: var(--primary-lighter);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(15,118,110,0.15);
+}
+
+.cat-card:hover::before { opacity: 0.06; }
+
+.cat-card.active {
+  border-color: var(--primary-color);
+  background: var(--primary-gradient-soft);
+  box-shadow: 0 4px 16px rgba(15,118,110,0.2);
+  transform: translateY(-3px);
+}
+
+.cat-card.active::before { opacity: 0.08; }
+
+.cat-emoji {
+  font-size: 28px;
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+  transition: transform var(--transition-spring);
+}
+
+.cat-card:hover .cat-emoji,
+.cat-card.active .cat-emoji {
+  transform: scale(1.15);
+}
+
+.cat-name {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--text-secondary);
-  outline: none;
+  position: relative;
+  z-index: 1;
+  transition: color var(--transition-base);
 }
 
-.cat-tab:hover {
-  border-color: var(--primary-lighter);
-  background: var(--primary-gradient-soft);
-  color: var(--primary-dark);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.15);
-}
+.cat-card:hover .cat-name { color: var(--primary-dark); }
+.cat-card.active .cat-name { color: var(--primary-dark); }
 
-.cat-tab.active {
+.cat-check {
+  position: absolute;
+  top: 8px; right: 8px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
   background: var(--primary-gradient);
-  border-color: var(--primary-color);
+  display: flex; align-items: center; justify-content: center;
   color: #fff;
-  box-shadow: var(--shadow-primary);
-  transform: translateY(-2px);
+  font-size: 10px;
+  z-index: 1;
 }
 
-.cat-icon { font-size: 17px; line-height: 1; }
+/* ════════════════════════════════════════
+   骨架屏
+════════════════════════════════════════ */
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--spacing-lg);
+}
 
-/* ── 信息卡片网格 ── */
+.skeleton-card {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border-lighter);
+}
+
+.sk-img {
+  height: 190px;
+  background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-secondary) 50%, var(--bg-tertiary) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite;
+}
+
+.sk-body { padding: var(--spacing-md); }
+
+.sk-line {
+  border-radius: var(--radius-full);
+  background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-secondary) 50%, var(--bg-tertiary) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite;
+  margin-bottom: var(--spacing-sm);
+}
+
+.sk-t1 { height: 14px; }
+.sk-t2 { height: 12px; width: 80%; }
+.sk-t3 { height: 10px; width: 50%; }
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ════════════════════════════════════════
+   信息卡片
+════════════════════════════════════════ */
 .info-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -514,7 +693,7 @@ export default {
 .info-card {
   background: var(--bg-primary);
   border: 1px solid var(--border-lighter);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   overflow: hidden;
   cursor: pointer;
   transition: all var(--transition-cubic);
@@ -528,37 +707,88 @@ export default {
   border-color: var(--border-primary);
 }
 
+/* 图片区 */
 .card-img-wrap {
   position: relative;
-  height: 180px;
+  height: 190px;
   overflow: hidden;
   background: var(--bg-tertiary);
 }
 
 .card-img {
-  width: 100%;
-  height: 100%;
+  width: 100%; height: 100%;
   transition: transform var(--transition-slow);
   display: block;
 }
 
-.info-card:hover .card-img {
-  transform: scale(1.08);
+.info-card:hover .card-img { transform: scale(1.08); }
+
+.img-fallback {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
+  color: var(--text-disabled);
+  font-size: 36px;
 }
 
+/* 分类徽章 */
 .card-area-badge {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 10px; left: 10px;
   background: var(--primary-gradient);
   color: #fff;
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
   padding: 3px 10px;
   border-radius: var(--radius-full);
-  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.3);
+  box-shadow: 0 2px 8px rgba(15,118,110,0.3);
+  z-index: 2;
 }
 
+/* 热门徽章 */
+.hot-badge {
+  position: absolute;
+  top: 10px; right: 10px;
+  background: linear-gradient(135deg, #f97316, #ef4444);
+  color: #fff;
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  box-shadow: 0 2px 8px rgba(239,68,68,0.3);
+  z-index: 2;
+}
+
+/* 悬浮遮罩 */
+.card-hover-mask {
+  position: absolute;
+  inset: 0;
+  background: rgba(15,118,110,0.68);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--transition-base);
+  backdrop-filter: blur(2px);
+  z-index: 3;
+}
+
+.info-card:hover .card-hover-mask { opacity: 1; }
+
+.mask-view-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #fff;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  background: rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.35);
+  border-radius: var(--radius-full);
+  padding: 8px 20px;
+}
+
+/* 正文 */
 .card-body {
   padding: var(--spacing-md);
   flex: 1;
@@ -579,9 +809,7 @@ export default {
   transition: color var(--transition-base);
 }
 
-.info-card:hover .card-name {
-  color: var(--primary-color);
-}
+.info-card:hover .card-name { color: var(--primary-color); }
 
 .card-desc {
   font-size: var(--font-size-sm);
@@ -612,39 +840,66 @@ export default {
   gap: 4px;
 }
 
-.card-actions {
-  display: flex;
-  gap: var(--spacing-base);
-}
-
-.action-item {
-  font-size: var(--font-size-xs);
-  color: var(--text-tertiary);
+.card-zan {
   display: flex;
   align-items: center;
   gap: 3px;
+  font-size: var(--font-size-xs);
+  color: var(--text-disabled);
+  transition: color var(--transition-fast);
 }
 
-/* ── 空状态 ── */
+.card-zan.active { color: var(--warning-color); }
+
+/* ════════════════════════════════════════
+   空状态
+════════════════════════════════════════ */
 .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-4xl);
   text-align: center;
-  padding: var(--spacing-4xl) var(--spacing-lg);
-  color: var(--text-disabled);
+}
+
+.empty-illus {
+  position: relative;
+  width: 90px; height: 90px;
+  margin-bottom: var(--spacing-xl);
+}
+
+.empty-circle {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--primary-gradient-soft);
+  border: 2px dashed var(--primary-lighter);
 }
 
 .empty-icon {
-  font-size: 52px;
-  display: block;
-  margin-bottom: var(--spacing-md);
-  opacity: 0.4;
+  position: absolute;
+  inset: 0; margin: auto;
+  width: 36px; height: 36px;
+  font-size: 36px;
+  color: var(--primary-light);
 }
 
-.empty-state p {
-  font-size: var(--font-size-md);
+.empty-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+  margin: 0 0 var(--spacing-sm);
+}
+
+.empty-hint {
+  font-size: var(--font-size-sm);
+  color: var(--text-disabled);
   margin: 0;
 }
 
-/* ── 分页 ── */
+/* ════════════════════════════════════════
+   分页
+════════════════════════════════════════ */
 .pagination-wrap {
   display: flex;
   justify-content: center;
@@ -653,27 +908,36 @@ export default {
   border-top: 1px solid var(--border-lighter);
 }
 
-/* ── 响应式 ── */
+/* ════════════════════════════════════════
+   响应式
+════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .category-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
   .hero-banner {
-    margin: 0;
-    padding: var(--spacing-xl) var(--spacing-md);
+    padding: var(--spacing-xl) var(--spacing-md) 0;
     border-radius: var(--radius-md);
   }
 
-  .hero-content {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--spacing-lg);
-  }
+  .hero-title { font-size: var(--font-size-3xl); }
 
-  .hero-features {
-    flex-direction: row;
+  .hero-stats {
     flex-wrap: wrap;
+    justify-content: center;
+    border-radius: var(--radius-xl);
+    gap: var(--spacing-base);
   }
 
-  .hero-title {
-    font-size: var(--font-size-3xl);
+  .section-block {
+    padding: var(--spacing-lg);
+  }
+
+  .category-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .info-grid {

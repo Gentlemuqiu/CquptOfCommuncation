@@ -3,7 +3,7 @@
     <!-- 左侧：logo + 标题 -->
     <div class="header-brand">
       <div class="brand-icon">
-        <i class="el-icon-s-grid"></i>
+        <el-icon><Grid /></el-icon>
       </div>
       <div class="brand-text">
         <h1 class="header-title">后台管理</h1>
@@ -20,7 +20,7 @@
       size="small"
       class="back-btn"
     >
-      <i class="el-icon-house"></i>
+      <el-icon><House /></el-icon>
       返回主页
     </el-button>
 
@@ -37,15 +37,15 @@
           class="user-avatar"
         />
         <span class="user-name">{{ user.nickName || user.username || '管理员' }}</span>
-        <i class="el-icon-arrow-down arrow-icon"></i>
+        <el-icon class="arrow-icon"><ArrowDown /></el-icon>
       </div>
       <template #dropdown>
         <el-dropdown-menu>
-          <el-dropdown-item @click="$router.push('/person')">
-            <i class="el-icon-user"></i> 个人信息
+          <el-dropdown-item @click="$router.push('/front/person')">
+            <el-icon><User /></el-icon> 个人信息
           </el-dropdown-item>
           <el-dropdown-item divided @click="handleLogout">
-            <i class="el-icon-switch-button"></i> 退出系统
+            <el-icon><SwitchButton /></el-icon> 退出系统
           </el-dropdown-item>
         </el-dropdown-menu>
       </template>
@@ -54,8 +54,11 @@
 </template>
 
 <script>
+import { Grid, House, ArrowDown, User, SwitchButton } from '@element-plus/icons-vue'
+
 export default {
   name: "AdminHeader",
+  components: { Grid, House, ArrowDown, User, SwitchButton },
   data() {
     return {
       user: {},
@@ -86,14 +89,21 @@ export default {
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
-  background: rgba(255, 255, 255, 0.96);
+  background: #ffffff;
   border-bottom: 1px solid var(--border-light);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   position: sticky;
   top: 0;
   z-index: var(--z-sticky);
   box-shadow: var(--shadow-sm);
+}
+
+/* 顶部渐变线 */
+.admin-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--primary-gradient);
 }
 
 /* ── 品牌区域 ── */
@@ -113,11 +123,8 @@ export default {
   align-items: center;
   justify-content: center;
   box-shadow: 0 3px 8px rgba(15, 118, 110, 0.3);
-}
-
-.brand-icon i {
-  font-size: 18px;
   color: #fff;
+  font-size: 18px;
 }
 
 .brand-text {
@@ -147,6 +154,7 @@ export default {
   border-radius: var(--radius-sm) !important;
   font-size: var(--font-size-sm) !important;
   padding: 6px 14px !important;
+  gap: 4px;
 }
 
 /* ── 分割线 ── */
@@ -201,21 +209,19 @@ export default {
   transform: rotate(180deg);
 }
 
+/* ── 下拉菜单图标 ── */
+:deep(.el-dropdown-menu__item .el-icon) {
+  margin-right: var(--spacing-sm);
+  color: var(--text-secondary);
+}
+
 /* ── 响应式 ── */
 @media (max-width: 768px) {
   .admin-header {
     padding: 0 var(--spacing-md);
     gap: var(--spacing-sm);
   }
-
-  .header-subtitle,
-  .user-name,
-  .header-divider {
-    display: none;
-  }
-
-  .brand-text .header-title {
-    font-size: var(--font-size-base);
-  }
+  .header-subtitle, .user-name, .header-divider { display: none; }
+  .brand-text .header-title { font-size: var(--font-size-base); }
 }
 </style>

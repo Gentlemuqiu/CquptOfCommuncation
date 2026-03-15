@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/user")
@@ -21,14 +22,18 @@ public class UserController {
 
     @PostMapping("/login")
     public Result<?> login(@RequestBody User user) {
-        User res = userMapper.selectOne(Wrappers.<User>lambdaQuery().eq(User::getUsername, user.getUsername())
-                .eq(User::getPassword, user.getPassword()).eq(User::getRole, user.getRole()));
+        // 只通过用户名+密码查找，不限制 role（角色由数据库决定，前端无需传入）
+        User res = userMapper.selectOne(Wrappers.<User>lambdaQuery()
+                .eq(User::getUsername, user.getUsername())
+                .eq(User::getPassword, user.getPassword()));
         if (res == null) {
             return Result.error("-1", "用户名或密码错误");
         }
         if (res.getForbidLogin()) {
             return Result.error("-1", "因账号违规已被禁用");
         }
+        // 密码脱敏：不返回密码字段
+        res.setPassword(null);
         return Result.success(res);
     }
 
@@ -100,8 +105,40 @@ public class UserController {
 
     @PutMapping
     public Result<?> update(@RequestBody User user) {
+        // 不允许通过此接口修改密码
+        user.setPassword(null);
         userMapper.updateById(user);
         return Result.success();
+    }
+
+    /**
+     * 修改密码（需校验旧密码）
+     */
+    @PutMapping("/password")
+    public Result<?> changePassword(@RequestBody Map<String, Object> params) {
+        Object idObj = params.get("id");
+        String oldPassword = (String) params.get("oldPassword");
+        String newPassword = (String) params.get("newPassword");
+
+        if (idObj == null || StrUtil.isBlank(oldPassword) || StrUtil.isBlank(newPassword)) {
+            return Result.error("-1", "参数不完整");
+        }
+        if (newPassword.length() < 6) {
+            return Result.error("-1", "新密码长度不能少于 6 位");
+        }
+
+        Integer userId = Integer.valueOf(idObj.toString());
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            return Result.error("-1", "用户不存在");
+        }
+        if (!user.getPassword().equals(oldPassword)) {
+            return Result.error("-1", "当前密码不正确");
+        }
+
+        user.setPassword(newPassword);
+        userMapper.updateById(user);
+        return Result.success("密码修改成功");
     }
 
     @DeleteMapping("/{id}")

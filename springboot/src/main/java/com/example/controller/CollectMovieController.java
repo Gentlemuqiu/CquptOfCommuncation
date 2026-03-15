@@ -1,6 +1,5 @@
 package com.example.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.example.common.Result;
 import com.example.entity.CollectMovie;
 import com.example.mapper.CollectMovieMapper;
@@ -25,9 +24,9 @@ public class CollectMovieController {
     @PostMapping
     public Result<?> save(@RequestBody CollectMovie collectMovie) {
         CollectMovie collectMovie1 =
-                collectMovieMapper.selectOne(new QueryWrapper<CollectMovie>()
-                        .eq("movieid", collectMovie.getMovieid())
-                        .eq("userid", collectMovie.getUserid()));
+                collectMovieMapper.selectOne(Wrappers.<CollectMovie>lambdaQuery()
+                        .eq(CollectMovie::getMovieId, collectMovie.getMovieId())
+                        .eq(CollectMovie::getUserId, collectMovie.getUserId()));
         if (collectMovie1 != null) {
             return Result.error("-1", "您已收藏过了");
         }
@@ -71,7 +70,7 @@ public class CollectMovieController {
             query.like(CollectMovie::getName, name); // 根据名称模糊查询
         }
         if (userId != null) {
-            query.eq(CollectMovie::getUserid, userId); // 根据用户ID查询
+            query.eq(CollectMovie::getUserId, userId); // 根据用户ID查询
         }
         IPage<CollectMovie> page =
                 collectMovieMapper.selectPage(new Page<>(pageNum, pageSize), query);

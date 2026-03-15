@@ -1,7 +1,6 @@
 package com.example.controller;
 
 import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -10,13 +9,11 @@ import com.example.common.Result;
 import com.example.entity.Message;
 import com.example.entity.User;
 import com.example.mapper.MessageMapper;
-import com.example.mapper.MovieMapper;
 import com.example.mapper.UserMapper;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
 import java.util.List;
 
@@ -27,8 +24,6 @@ public class MessageController {
     private MessageMapper messageMapper;
     @Resource
     private UserMapper userMapper;
-    @Resource
-    private MovieMapper movieMapper;
 
     @PostMapping
     public Result<?> save(@RequestBody Message message) {
@@ -74,20 +69,6 @@ public class MessageController {
     @GetMapping
     public Result<?> findAll() {
         return Result.success(messageMapper.selectList(null));
-    }
-
-    @GetMapping("/user/{username}/{type}")
-    public Result<?> userComment(@PathVariable String username, @PathVariable Integer type) {
-        List<Message> messageList = messageMapper.selectList(
-                Wrappers.<Message>lambdaQuery()
-                        .eq(Message::getUsername, username)
-                        .eq(Message::getType, type)
-        );
-        for (Message message : messageList) {
-            Long foreignId = message.getForeignId();
-            message.setMovie(movieMapper.selectById(foreignId));
-        }
-        return Result.success(messageList);
     }
 
     @GetMapping("/foreign/{id}/{type}")

@@ -1,8 +1,24 @@
 <template>
   <div class="admin-page">
+    <!-- 页面标题 -->
+    <div class="admin-page-header">
+      <div class="page-header-left">
+        <div class="page-header-icon red">
+          <el-icon><Warning /></el-icon>
+        </div>
+        <div>
+          <h2 class="page-header-title">投诉管理</h2>
+          <p class="page-header-desc">审核用户投诉，处理后将删除对应评论</p>
+        </div>
+      </div>
+      <span class="page-header-badge" v-if="total > 0">
+        待处理 {{ total }} 条
+      </span>
+    </div>
+
     <div class="admin-toolbar">
       <span class="toolbar-tip">
-        <i class="el-icon-info"></i>
+        <el-icon style="color: var(--info-color)"><InfoFilled /></el-icon>
         处理投诉后，相关评论将一并删除
       </span>
     </div>
@@ -21,8 +37,8 @@
               @confirm="handleDelete(scope.row)"
             >
               <template #reference>
-                <el-button size="small" type="danger" icon="el-icon-check">
-                  处理并删除
+                <el-button size="small" type="danger">
+                  <el-icon><Check /></el-icon>处理并删除
                 </el-button>
               </template>
             </el-popconfirm>
@@ -49,9 +65,11 @@
 
 <script>
 import request from "@/utils/request";
+import { Warning, InfoFilled, Check } from '@element-plus/icons-vue'
 
 export default {
   name: "Jubao",
+  components: { Warning, InfoFilled, Check },
   data() {
     return {
       loading: false,
@@ -93,13 +111,4 @@ export default {
 };
 </script>
 
-<style scoped>
-.toolbar-tip {
-  font-size: var(--font-size-sm);
-  color: var(--text-tertiary);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.toolbar-tip i { color: var(--info-color); }
-</style>
+<style scoped></style>
